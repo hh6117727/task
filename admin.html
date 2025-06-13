@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin - Gestion des Tâches</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js"></script>
+</head>
+<body>
+  <h2>Ajouter une tâche</h2>
+  <input id="date" type="date"><br>
+  <input id="tech" placeholder="Technicien"><br>
+  <input id="task" placeholder="Tâche"><br>
+  <button onclick="ajouter()">Ajouter</button>
+
+  <h3>Toutes les tâches</h3>
+  <ul id="liste"></ul>
+
+  <script>
+    async function ajouter() {
+      const task = {
+        date: document.getElementById('date').value,
+        tech: document.getElementById('tech').value,
+        task: document.getElementById('task').value
+      };
+      await addTask(task);
+      location.reload();
+    }
+
+    getAllTasks().then(tasks => {
+      const ul = document.getElementById("liste");
+      tasks.slice(1).forEach((r, i) => {
+        const li = document.createElement("li");
+        li.innerText = `${r[0]} | ${r[1]} | ${r[2]} | ${r[3]}`;
+        ul.appendChild(li);
+      });
+    });
+  </script>
+</body>
+</html>

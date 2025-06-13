@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Technicien - Mes Tâches</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js"></script>
+</head>
+<body>
+  <h2>Mes Tâches</h2>
+  <ul id="liste"></ul>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const tech = urlParams.get('tech');
+
+    getTasksByUser(tech).then(data => {
+      const ul = document.getElementById("liste");
+      data.forEach((r, i) => {
+        const li = document.createElement("li");
+        li.innerHTML = `${r[0]} - ${r[2]} - ${r[3]}`;
+        if (r[3] !== "Fait") {
+          const btn = document.createElement("button");
+          btn.innerText = "✅";
+          btn.onclick = async () => {
+            await markAsDone(i + 1);
+            alert("Marqué comme fait");
+            location.reload();
+          };
+          li.appendChild(btn);
+        }
+        ul.appendChild(li);
+      });
+    });
+  </script>
+</body>
+</html>

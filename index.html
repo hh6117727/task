@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Connexion</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h2>Connexion</h2>
+  <input id="user" placeholder="Nom d'utilisateur">
+  <button onclick="login()">Connexion</button>
+
+  <script>
+    function login() {
+      const user = document.getElementById("user").value.toLowerCase();
+      if (user === "admin") window.location.href = "admin.html";
+      else window.location.href = "user.html?tech=" + encodeURIComponent(user);
+    }
+  </script>
+</body>
+</html>
