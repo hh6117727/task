@@ -1,19 +1,101 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Connexion</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <title>Gestion des Tâches</title>
+  <style>
+    body { font-family: Arial; padding: 20px; background: #f4f4f4; }
+    h2 { color: #333; }
+    input, button, select { margin: 5px; padding: 8px; font-size: 16px; }
+    .section { margin-top: 30px; padding: 20px; background: #fff; border-radius: 10px; }
+    ul { list-style: none; padding: 0; }
+    li { background: #e0f7fa; margin: 5px 0; padding: 10px; border-left: 5px solid #00796b; }
+  </style>
 </head>
 <body>
-  <h2>Connexion</h2>
-  <input id="user" placeholder="Nom d'utilisateur">
-  <button onclick="login()">Connexion</button>
+
+  <h2>🔐 Connexion</h2>
+  <input id="username" placeholder="Nom d'utilisateur" />
+  <button onclick="login()">Se connecter</button>
+
+  <div id="adminSection" class="section" style="display:none;">
+    <h2>👨‍💼 Admin - Ajouter une tâche</h2>
+    <input type="date" id="date" />
+    <input placeholder="Technicien" id="tech" />
+    <input placeholder="Tâche" id="task" />
+    <button onclick="ajouterTache()">Ajouter</button>
+    <h3>📋 Toutes les Tâches</h3>
+    <ul id="toutesTaches"></ul>
+  </div>
+
+  <div id="userSection" class="section" style="display:none;">
+    <h2>👷‍♂️ Technicien - Mes Tâches</h2>
+    <ul id="mesTaches"></ul>
+  </div>
 
   <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbxPjOW0W8sn932N3RGVjOmCMxTyDT_aQfm6tMVPbSe2Q7FTDI0oEl_4I0r9IlWr-Ra2/exec";
+
+    let username = "";
+
     function login() {
-      const user = document.getElementById("user").value.toLowerCase();
-      if (user === "admin") window.location.href = "admin.html";
-      else window.location.href = "user.html?tech=" + encodeURIComponent(user);
+      username = document.getElementById("username").value.toLowerCase();
+      if (username === "admin") {
+        document.getElementById("adminSection").style.display = "block";
+        chargerToutesTaches();
+      } else {
+        document.getElementById("userSection").style.display = "block";
+        chargerMesTaches(username);
+      }
+    }
+
+    async function ajouterTache() {
+      const data = {
+        date: document.getElementById("date").value,
+        tech: document.getElementById("tech").value,
+        task: document.getElementById("task").value
+      };
+      await fetch(API_URL + "?action=add", {
+        method: "POST",
+        body: JSON.stringify(data),
+        headers: { "Content-Type": "application/json" }
+      });
+      alert("Tâche ajoutée !");
+      chargerToutesTaches();
+    }
+
+    async function chargerToutesTaches() {
+      const res = await fetch(API_URL + "?action=list", { method: "POST" });
+      const data = await res.json();
+      const ul = document.getElementById("toutesTaches");
+      ul.innerHTML = "";
+      data.slice(1).forEach(row => {
+        const li = document.createElement("li");
+        li.innerText = `${row[0]} | ${row[1]} | ${row[2]} | ${row[3]}`;
+        ul.appendChild(li);
+      });
+    }
+
+    async function chargerMesTaches(user) {
+      const res = await fetch(API_URL + "?action=userTasks&tech=" + user, { method: "POST" });
+      const data = await res.json();
+      const ul = document.getElementById("mesTaches");
+      ul.innerHTML = "";
+      data.forEach((row, index) => {
+        const li = document.createElement("li");
+        li.innerHTML = `${row[0]} - ${row[2]} - ${row[3]}`;
+        if (row[3] !== "Fait") {
+          const btn = document.createElement("button");
+          btn.innerText = "✅ Terminer";
+          btn.onclick = async () => {
+            await fetch(API_URL + "?action=done&row=" + (index + 1), { method: "POST" });
+            alert("Tâche terminée !");
+            chargerMesTaches(user);
+          };
+          li.appendChild(btn);
+        }
+        ul.appendChild(li);
+      });
     }
   </script>
 </body>
