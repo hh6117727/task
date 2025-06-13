@@ -49,6 +49,14 @@
             // Display user ID on relevant sections
             document.getElementById('admin-user-id-display').innerText = `Your Firebase User ID: ${currentUserId}`;
             document.getElementById('tech-user-id-display').innerText = `Your Firebase User ID: ${currentUserId}`;
+            
+            // Enable the 'Add Task' button once Firebase and user are ready
+            const addTaskButton = document.getElementById('add-task-button');
+            if (addTaskButton) {
+                addTaskButton.disabled = false;
+                addTaskButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+
             // Set up real-time listener for tasks once authenticated
             setupRealtimeTasksListener();
           } else {
@@ -56,6 +64,13 @@
             console.log("No Firebase user signed in.");
             document.getElementById('admin-user-id-display').innerText = `Your Firebase User ID: Not signed in`;
             document.getElementById('tech-user-id-display').innerText = `Your Firebase User ID: Not signed in`;
+            
+            // Disable the 'Add Task' button if no user is signed in
+            const addTaskButton = document.getElementById('add-task-button');
+            if (addTaskButton) {
+                addTaskButton.disabled = true;
+                addTaskButton.classList.add('opacity-50', 'cursor-not-allowed');
+            }
           }
         });
       } catch (error) {
@@ -117,8 +132,9 @@
 
     // Add a new task to Firestore
     window.ajouterTache = async function() {
+      // Add check to prevent action if Firebase isn't ready
       if (!db || !currentUserId) {
-        showMessage("Database not ready. Please try again.", "error");
+        showMessage("Database not ready. Please wait for initialization.", "error");
         return;
       }
 
@@ -157,8 +173,9 @@
 
     // Update task status to "Fait" (Done)
     window.markTaskDone = async function(taskId) {
-      if (!db) {
-        showMessage("Database not ready. Cannot mark task as done.", "error");
+      // Add check to prevent action if Firebase isn't ready
+      if (!db || !currentUserId) {
+        showMessage("Database not ready. Please wait for initialization.", "error");
         return;
       }
       try {
@@ -292,8 +309,8 @@
         <input type="date" id="date" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2">
         <input placeholder="Technicien (e.g., John)" id="tech" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2">
         <input placeholder="Tâche (e.g., Fix Printer)" id="task" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4">
-        <button onclick="ajouterTache()"
-                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-lg">
+        <button id="add-task-button" onclick="ajouterTache()"
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-lg opacity-50 cursor-not-allowed" disabled>
           Ajouter
         </button>
       </div>
