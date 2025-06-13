@@ -1,148 +1,426 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Gestion des Tâches</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Tâches</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom font for a modern look */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Styling for the custom message box */
+        .message-box-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .message-box {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1); /* shadow-xl */
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .message-box.success {
+            border-top: 4px solid #10B981; /* green-500 */
+        }
+
+        .message-box.error {
+            border-top: 4px solid #EF4444; /* red-500 */
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Styling for the loading spinner */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3B82F6; /* blue-500 */
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-4">
 
-  <!-- Connexion -->
-  <div id="loginForm" class="bg-white p-6 rounded shadow-md w-full max-w-md">
-    <h2 class="text-xl font-bold mb-4">🔐 Connexion</h2>
-    <input type="text" id="username" placeholder="Nom d'utilisateur" class="border p-2 w-full mb-2" />
-    <input type="password" id="password" placeholder="Mot de passe" class="border p-2 w-full mb-4" />
-    <button onclick="login()" class="bg-blue-500 text-white px-4 py-2 rounded">Se connecter</button>
-    <p id="loginError" class="text-red-500 mt-2 hidden">Identifiants invalides</p>
-  </div>
-
-  <!-- Panneau admin -->
-  <div id="adminPanel" class="hidden bg-white p-6 rounded shadow-md w-full max-w-2xl mt-6">
-    <h2 class="text-xl font-bold mb-4">👤 Panneau Administrateur</h2>
-
-    <h3 class="font-semibold mb-1">Ajouter une tâche :</h3>
-    <div class="flex gap-2 mb-4">
-      <input type="date" id="taskDate" class="border p-2 w-1/3" />
-      <input type="text" id="taskTechnicien" placeholder="Nom du technicien" class="border p-2 w-1/3" />
-      <input type="text" id="taskDesc" placeholder="Description de tâche" class="border p-2 w-1/3" />
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="spinner"></div>
+        <p class="ml-4 text-gray-700 text-lg">Chargement...</p>
     </div>
-    <button onclick="addTask()" class="bg-green-500 text-white px-4 py-2 rounded mb-6">➕ Ajouter tâche</button>
 
-    <h3 class="font-semibold mb-1">Ajouter utilisateur :</h3>
-    <div class="flex gap-2 mb-4">
-      <input type="text" id="newUsername" placeholder="Nom" class="border p-2 w-1/3" />
-      <input type="text" id="newPassword" placeholder="Mot de passe" class="border p-2 w-1/3" />
-      <select id="newRole" class="border p-2 w-1/3">
-        <option value="admin">Admin</option>
-        <option value="technicien">Technicien</option>
-      </select>
+    <!-- Custom Message Box -->
+    <div id="messageBoxOverlay" class="message-box-overlay hidden">
+        <div id="messageBox" class="message-box">
+            <p id="messageBoxContent" class="text-lg font-semibold mb-4"></p>
+            <button onclick="hideMessageBox()" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out">
+                OK
+            </button>
+        </div>
     </div>
-    <button onclick="addUser()" class="bg-purple-500 text-white px-4 py-2 rounded">➕ Ajouter utilisateur</button>
-  </div>
 
-  <!-- Panneau technicien -->
-  <div id="techPanel" class="hidden bg-white p-6 rounded shadow-md w-full max-w-2xl mt-6">
-    <h2 class="text-xl font-bold mb-4">📋 Mes Tâches</h2>
-    <ul id="taskList" class="space-y-2"></ul>
-  </div>
+    <!-- Connexion Form -->
+    <div id="loginForm" class="bg-white p-6 rounded-xl shadow-xl w-full max-w-md">
+        <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">🔐 Connexion</h2>
+        <input type="text" id="username" placeholder="Nom d'utilisateur" class="border border-gray-300 p-3 rounded-lg w-full mb-3 focus:ring-blue-500 focus:border-blue-500 outline-none" />
+        <input type="password" id="password" placeholder="Mot de passe" class="border border-gray-300 p-3 rounded-lg w-full mb-6 focus:ring-blue-500 focus:border-blue-500 outline-none" />
+        <button onclick="login()" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg w-full transition duration-300 ease-in-out shadow-md">Se connecter</button>
+        <p id="loginError" class="text-red-500 text-center mt-4 hidden">Identifiants invalides. Veuillez réessayer.</p>
+    </div>
 
-  <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbz0QW_iHnN-szxYWWtq19uPL3TnpjjXbp6kma5bdLrVyZIeuQ8mZK1_iwISOgYd959A/exec";
-    let currentUser = "";
+    <!-- Admin Panel -->
+    <div id="adminPanel" class="hidden bg-white p-6 rounded-xl shadow-xl w-full max-w-2xl mt-8">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-gray-800">👤 Panneau Administrateur</h2>
+            <button onclick="logout()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out">Déconnexion</button>
+        </div>
 
-    async function login() {
-      const username = document.getElementById("username").value.trim();
-      const password = document.getElementById("password").value.trim();
+        <h3 class="font-semibold text-lg mb-3 text-gray-700">Ajouter une tâche :</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+            <input type="date" id="taskDate" class="border border-gray-300 p-3 rounded-lg focus:ring-green-500 focus:border-green-500 outline-none" />
+            <input type="text" id="taskTechnicien" placeholder="Nom du technicien" class="border border-gray-300 p-3 rounded-lg focus:ring-green-500 focus:border-green-500 outline-none" />
+            <input type="text" id="taskDesc" placeholder="Description de tâche" class="border border-gray-300 p-3 rounded-lg focus:ring-green-500 focus:border-green-500 outline-none" />
+        </div>
+        <button onclick="addTask()" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg mb-8 w-full md:w-auto transition duration-300 ease-in-out shadow-md">➕ Ajouter tâche</button>
 
-      const res = await fetch(API_URL, {
-        method: "POST",
-        body: new URLSearchParams({ action: "login", username, password }),
-      });
-      const data = await res.json();
+        <h3 class="font-semibold text-lg mb-3 text-gray-700">Ajouter utilisateur :</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+            <input type="text" id="newUsername" placeholder="Nom d'utilisateur" class="border border-gray-300 p-3 rounded-lg focus:ring-purple-500 focus:border-purple-500 outline-none" />
+            <input type="password" id="newPassword" placeholder="Mot de passe" class="border border-gray-300 p-3 rounded-lg focus:ring-purple-500 focus:border-purple-500 outline-none" />
+            <select id="newRole" class="border border-gray-300 p-3 rounded-lg bg-white focus:ring-purple-500 focus:border-purple-500 outline-none">
+                <option value="admin">Admin</option>
+                <option value="technicien">Technicien</option>
+            </select>
+        </div>
+        <button onclick="addUser()" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-6 rounded-lg w-full md:w-auto transition duration-300 ease-in-out shadow-md">➕ Ajouter utilisateur</button>
+    </div>
 
-      if (data.success) {
-        currentUser = username;
-        document.getElementById("loginForm").classList.add("hidden");
+    <!-- Technician Panel -->
+    <div id="techPanel" class="hidden bg-white p-6 rounded-xl shadow-xl w-full max-w-2xl mt-8">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-gray-800">📋 Mes Tâches</h2>
+            <button onclick="logout()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out">Déconnexion</button>
+        </div>
+        <ul id="taskList" class="space-y-3">
+            <!-- Tasks will be loaded here -->
+        </ul>
+    </div>
 
-        if (data.role === "admin") {
-          document.getElementById("adminPanel").classList.remove("hidden");
-        } else {
-          document.getElementById("techPanel").classList.remove("hidden");
-          getTasks();
+    <script>
+        // Google Apps Script API URL
+        const API_URL = "https://script.google.com/macros/s/AKfycbz0QW_iHnN-szxYWWtq19uPL3TnpjjXbp6kma5bdLrVyZIeuQ8mZK1_iwISOgYd959A/exec";
+        let currentUser = ""; // Stores the currently logged-in username
+
+        // --- Utility Functions ---
+
+        /**
+         * Shows the loading overlay.
+         */
+        function showLoading() {
+            document.getElementById("loadingOverlay").classList.remove("hidden");
         }
-      } else {
-        document.getElementById("loginError").classList.remove("hidden");
-      }
-    }
 
-    async function addTask() {
-      const date = document.getElementById("taskDate").value;
-      const technicien = document.getElementById("taskTechnicien").value;
-      const task = document.getElementById("taskDesc").value;
+        /**
+         * Hides the loading overlay.
+         */
+        function hideLoading() {
+            document.getElementById("loadingOverlay").classList.add("hidden");
+        }
 
-      await fetch(API_URL, {
-        method: "POST",
-        body: new URLSearchParams({
-          action: "addTask",
-          date,
-          technicien,
-          task
-        }),
-      });
-      alert("✅ Tâche ajoutée !");
-    }
+        /**
+         * Displays a custom message box with a given message and type (success/error).
+         * @param {string} message - The message to display.
+         * @param {string} type - 'success' or 'error' to determine styling.
+         */
+        function showMessageBox(message, type) {
+            const messageBoxOverlay = document.getElementById("messageBoxOverlay");
+            const messageBox = document.getElementById("messageBox");
+            const messageBoxContent = document.getElementById("messageBoxContent");
 
-    async function addUser() {
-      const username = document.getElementById("newUsername").value;
-      const password = document.getElementById("newPassword").value;
-      const role = document.getElementById("newRole").value;
+            messageBoxContent.textContent = message;
+            messageBox.classList.remove("success", "error"); // Clear previous types
+            messageBox.classList.add(type); // Add new type for styling
 
-      await fetch(API_URL, {
-        method: "POST",
-        body: new URLSearchParams({
-          action: "addUser",
-          username,
-          password,
-          role
-        }),
-      });
-      alert("👤 Utilisateur ajouté !");
-    }
+            messageBoxOverlay.classList.remove("hidden");
+        }
 
-    async function getTasks() {
-      const res = await fetch(API_URL, {
-        method: "POST",
-        body: new URLSearchParams({ action: "getTasks", technicien: currentUser }),
-      });
-      const data = await res.json();
+        /**
+         * Hides the custom message box.
+         */
+        function hideMessageBox() {
+            document.getElementById("messageBoxOverlay").classList.add("hidden");
+        }
 
-      const list = document.getElementById("taskList");
-      list.innerHTML = "";
+        /**
+         * Clears input fields after a successful action.
+         * @param {string[]} elementIds - An array of element IDs to clear.
+         */
+        function clearInputs(elementIds) {
+            elementIds.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.value = '';
+                }
+            });
+        }
 
-      data.tasks.forEach((task) => {
-        const li = document.createElement("li");
-        li.className = "border p-2 flex justify-between items-center";
-        li.innerHTML = `
-          <span>${task.date} - ${task.task} (${task.status})</span>
-          ${task.status !== "Complétée" ? `<button onclick="completeTask('${task.date}','${task.task}')" class="bg-blue-500 text-white px-2 py-1 rounded">✅ Terminer</button>` : ""}
-        `;
-        list.appendChild(li);
-      });
-    }
+        // --- Core Application Functions ---
 
-    async function completeTask(date, task) {
-      await fetch(API_URL, {
-        method: "POST",
-        body: new URLSearchParams({
-          action: "completeTask",
-          date,
-          technicien: currentUser,
-          task
-        }),
-      });
-      alert("🎉 Tâche complétée !");
-      getTasks();
-    }
-  </script>
+        /**
+         * Handles user login by sending credentials to the API.
+         * Displays admin or technician panel based on successful login and role.
+         */
+        async function login() {
+            const usernameInput = document.getElementById("username");
+            const passwordInput = document.getElementById("password");
+            const loginError = document.getElementById("loginError");
+
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value.trim();
+
+            if (!username || !password) {
+                loginError.textContent = "Veuillez entrer un nom d'utilisateur et un mot de passe.";
+                loginError.classList.remove("hidden");
+                return;
+            }
+
+            showLoading(); // Show loading indicator
+
+            try {
+                const res = await fetch(API_URL, {
+                    method: "POST",
+                    body: new URLSearchParams({ action: "login", username, password }),
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    currentUser = username;
+                    document.getElementById("loginForm").classList.add("hidden");
+                    loginError.classList.add("hidden"); // Hide error message
+
+                    if (data.role === "admin") {
+                        document.getElementById("adminPanel").classList.remove("hidden");
+                    } else {
+                        document.getElementById("techPanel").classList.remove("hidden");
+                        getTasks(); // Load tasks for technician
+                    }
+                } else {
+                    loginError.textContent = "Identifiants invalides. Veuillez réessayer.";
+                    loginError.classList.remove("hidden");
+                }
+            } catch (error) {
+                console.error("Login error:", error);
+                loginError.textContent = "Erreur de connexion. Veuillez vérifier votre connexion internet.";
+                loginError.classList.remove("hidden");
+            } finally {
+                hideLoading(); // Hide loading indicator
+            }
+        }
+
+        /**
+         * Logs out the current user, hiding panels and showing the login form.
+         */
+        function logout() {
+            currentUser = "";
+            document.getElementById("adminPanel").classList.add("hidden");
+            document.getElementById("techPanel").classList.add("hidden");
+            document.getElementById("loginForm").classList.remove("hidden");
+            document.getElementById("username").value = ""; // Clear username field on logout
+            document.getElementById("password").value = ""; // Clear password field on logout
+            document.getElementById("loginError").classList.add("hidden"); // Hide any previous login errors
+        }
+
+        /**
+         * Adds a new task via the API.
+         */
+        async function addTask() {
+            const dateInput = document.getElementById("taskDate");
+            const technicienInput = document.getElementById("taskTechnicien");
+            const taskDescInput = document.getElementById("taskDesc");
+
+            const date = dateInput.value;
+            const technicien = technicienInput.value.trim();
+            const task = taskDescInput.value.trim();
+
+            if (!date || !technicien || !task) {
+                showMessageBox("Veuillez remplir tous les champs de la tâche.", "error");
+                return;
+            }
+
+            showLoading();
+
+            try {
+                await fetch(API_URL, {
+                    method: "POST",
+                    body: new URLSearchParams({
+                        action: "addTask",
+                        date,
+                        technicien,
+                        task
+                    }),
+                });
+                showMessageBox("✅ Tâche ajoutée avec succès !", "success");
+                clearInputs(["taskDate", "taskTechnicien", "taskDesc"]); // Clear inputs
+            } catch (error) {
+                console.error("Error adding task:", error);
+                showMessageBox("❌ Erreur lors de l'ajout de la tâche.", "error");
+            } finally {
+                hideLoading();
+            }
+        }
+
+        /**
+         * Adds a new user via the API.
+         */
+        async function addUser() {
+            const usernameInput = document.getElementById("newUsername");
+            const passwordInput = document.getElementById("newPassword");
+            const roleSelect = document.getElementById("newRole");
+
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value.trim();
+            const role = roleSelect.value;
+
+            if (!username || !password || !role) {
+                showMessageBox("Veuillez remplir tous les champs de l'utilisateur.", "error");
+                return;
+            }
+
+            showLoading();
+
+            try {
+                await fetch(API_URL, {
+                    method: "POST",
+                    body: new URLSearchParams({
+                        action: "addUser",
+                        username,
+                        password,
+                        role
+                    }),
+                });
+                showMessageBox("👤 Utilisateur ajouté avec succès !", "success");
+                clearInputs(["newUsername", "newPassword"]); // Clear inputs
+            } catch (error) {
+                console.error("Error adding user:", error);
+                showMessageBox("❌ Erreur lors de l'ajout de l'utilisateur.", "error");
+            } finally {
+                hideLoading();
+            }
+        }
+
+        /**
+         * Fetches and displays tasks for the current technician.
+         */
+        async function getTasks() {
+            const taskList = document.getElementById("taskList");
+            taskList.innerHTML = '<li class="text-gray-500 text-center">Chargement des tâches...</li>'; // Loading message for tasks
+
+            showLoading();
+
+            try {
+                const res = await fetch(API_URL, {
+                    method: "POST",
+                    body: new URLSearchParams({ action: "getTasks", technicien: currentUser }),
+                });
+                const data = await res.json();
+
+                taskList.innerHTML = ""; // Clear existing tasks
+
+                if (data.tasks && data.tasks.length > 0) {
+                    data.tasks.forEach((task, index) => {
+                        const li = document.createElement("li");
+                        li.className = `border border-gray-200 p-4 rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center bg-gray-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`;
+                        li.innerHTML = `
+                            <div class="mb-2 md:mb-0">
+                                <span class="block text-gray-800 font-medium">${task.date} - ${task.task}</span>
+                                <span class="block text-sm text-gray-600">Statut: ${task.status}</span>
+                            </div>
+                            ${task.status !== "Complétée" ? `
+                                <button onclick="completeTask('${task.date}','${task.task}')"
+                                    class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out shadow-sm w-full md:w-auto">
+                                    ✅ Terminer
+                                </button>
+                            ` : `
+                                <span class="bg-green-100 text-green-700 text-sm font-semibold px-3 py-1 rounded-full">Complétée</span>
+                            `}
+                        `;
+                        taskList.appendChild(li);
+                    });
+                } else {
+                    taskList.innerHTML = '<li class="text-gray-500 text-center py-4">Aucune tâche assignée pour le moment.</li>';
+                }
+            } catch (error) {
+                console.error("Error fetching tasks:", error);
+                taskList.innerHTML = '<li class="text-red-500 text-center py-4">Erreur lors du chargement des tâches.</li>';
+            } finally {
+                hideLoading();
+            }
+        }
+
+        /**
+         * Marks a task as completed via the API.
+         * @param {string} date - The date of the task.
+         * @param {string} task - The description of the task.
+         */
+        async function completeTask(date, task) {
+            showLoading();
+
+            try {
+                await fetch(API_URL, {
+                    method: "POST",
+                    body: new URLSearchParams({
+                        action: "completeTask",
+                        date,
+                        technicien: currentUser,
+                        task
+                    }),
+                });
+                showMessageBox("🎉 Tâche complétée avec succès !", "success");
+                getTasks(); // Refresh tasks after completion
+            } catch (error) {
+                console.error("Error completing task:", error);
+                showMessageBox("❌ Erreur lors de la complétion de la tâche.", "error");
+            } finally {
+                hideLoading();
+            }
+        }
+    </script>
 </body>
 </html>
