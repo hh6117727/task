@@ -1,387 +1,148 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <title>تطبيق إدارة المهام</title>
+  <meta charset="UTF-8">
+  <title>Gestion des Tâches</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 p-6 font-sans">
+<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-4">
 
-  <div id="loginSection" class="max-w-md mx-auto bg-white p-6 rounded shadow">
-    <h2 class="text-xl mb-4 font-semibold">تسجيل الدخول</h2>
-    <input type="text" id="usernameInput" placeholder="اسم المستخدم" class="border p-2 w-full mb-3" />
-    <input type="password" id="passwordInput" placeholder="كلمة المرور" class="border p-2 w-full mb-3" />
-    <button onclick="login()" class="bg-blue-600 text-white px-4 py-2 rounded w-full">دخول</button>
-    <p id="loginMsg" class="text-red-600 mt-2"></p>
+  <!-- Connexion -->
+  <div id="loginForm" class="bg-white p-6 rounded shadow-md w-full max-w-md">
+    <h2 class="text-xl font-bold mb-4">🔐 Connexion</h2>
+    <input type="text" id="username" placeholder="Nom d'utilisateur" class="border p-2 w-full mb-2" />
+    <input type="password" id="password" placeholder="Mot de passe" class="border p-2 w-full mb-4" />
+    <button onclick="login()" class="bg-blue-500 text-white px-4 py-2 rounded">Se connecter</button>
+    <p id="loginError" class="text-red-500 mt-2 hidden">Identifiants invalides</p>
   </div>
 
-  <div id="adminSection" class="hidden max-w-4xl mx-auto mt-6 bg-white p-6 rounded shadow">
+  <!-- Panneau admin -->
+  <div id="adminPanel" class="hidden bg-white p-6 rounded shadow-md w-full max-w-2xl mt-6">
+    <h2 class="text-xl font-bold mb-4">👤 Panneau Administrateur</h2>
 
-    <h2 class="text-2xl mb-4 font-semibold">لوحة تحكم المسؤول</h2>
-
-    <!-- إضافة مهمة -->
-    <div class="mb-6 border p-4 rounded">
-      <h3 class="font-semibold mb-2">إضافة مهمة جديدة</h3>
-      <input type="date" id="taskDate" class="border p-1 mb-2 w-full" />
-      <input type="text" id="taskTechnicien" placeholder="اسم الفني" class="border p-1 mb-2 w-full" />
-      <textarea id="taskDescription" placeholder="وصف المهمة" class="border p-1 mb-2 w-full"></textarea>
-      <button onclick="addTask()" class="bg-green-600 text-white px-3 py-1 rounded">إضافة المهمة</button>
-      <p id="addTaskMsg" class="mt-1"></p>
+    <h3 class="font-semibold mb-1">Ajouter une tâche :</h3>
+    <div class="flex gap-2 mb-4">
+      <input type="date" id="taskDate" class="border p-2 w-1/3" />
+      <input type="text" id="taskTechnicien" placeholder="Nom du technicien" class="border p-2 w-1/3" />
+      <input type="text" id="taskDesc" placeholder="Description de tâche" class="border p-2 w-1/3" />
     </div>
+    <button onclick="addTask()" class="bg-green-500 text-white px-4 py-2 rounded mb-6">➕ Ajouter tâche</button>
 
-    <!-- قائمة المهام -->
-    <div class="mb-6">
-      <h3 class="font-semibold mb-2">جميع المهام</h3>
-      <table class="w-full table-auto border-collapse border border-gray-300">
-        <thead>
-          <tr class="bg-gray-200">
-            <th class="border border-gray-300 p-2">التاريخ</th>
-            <th class="border border-gray-300 p-2">الفني</th>
-            <th class="border border-gray-300 p-2">الوصف</th>
-            <th class="border border-gray-300 p-2">الحالة</th>
-          </tr>
-        </thead>
-        <tbody id="tasksTableBody"></tbody>
-      </table>
-    </div>
-
-    <!-- إدارة المستخدمين -->
-    <div class="mb-6 border-t pt-4">
-      <h3 class="font-semibold mb-2">إدارة المستخدمين</h3>
-      <input type="text" id="newUsername" placeholder="اسم المستخدم" class="border p-1 mb-2 w-full max-w-xs" />
-      <input type="password" id="newUserPassword" placeholder="كلمة المرور" class="border p-1 mb-2 w-full max-w-xs" />
-      <select id="newUserRole" class="border p-1 mb-2 w-full max-w-xs">
-        <option value="technicien">فني</option>
-        <option value="admin">مسؤول</option>
+    <h3 class="font-semibold mb-1">Ajouter utilisateur :</h3>
+    <div class="flex gap-2 mb-4">
+      <input type="text" id="newUsername" placeholder="Nom" class="border p-2 w-1/3" />
+      <input type="text" id="newPassword" placeholder="Mot de passe" class="border p-2 w-1/3" />
+      <select id="newRole" class="border p-2 w-1/3">
+        <option value="admin">Admin</option>
+        <option value="technicien">Technicien</option>
       </select>
-      <button onclick="addUser()" class="bg-blue-600 text-white px-3 py-1 rounded mb-4">إضافة مستخدم</button>
-      <p id="addUserMsg"></p>
-
-      <h4 class="font-semibold mb-2">قائمة المستخدمين</h4>
-      <ul id="usersList" class="list-disc pl-5"></ul>
     </div>
-
-    <!-- تغيير كلمة المرور -->
-    <div id="changePasswordSectionAdmin" class="border-t pt-4 max-w-md">
-      <h3 class="font-semibold mb-2">تغيير كلمة المرور</h3>
-      <input type="password" id="currentPasswordAdmin" placeholder="كلمة المرور الحالية" class="border p-1 mb-2 w-full" />
-      <input type="password" id="newPassword1Admin" placeholder="كلمة المرور الجديدة" class="border p-1 mb-2 w-full" />
-      <input type="password" id="newPassword2Admin" placeholder="تأكيد كلمة المرور الجديدة" class="border p-1 mb-2 w-full" />
-      <button onclick="changePassword()" class="bg-green-600 text-white px-3 py-1 rounded">تغيير كلمة المرور</button>
-      <p id="changePasswordMsg" class="mt-2"></p>
-    </div>
+    <button onclick="addUser()" class="bg-purple-500 text-white px-4 py-2 rounded">➕ Ajouter utilisateur</button>
   </div>
 
-  <div id="technicienSection" class="hidden max-w-4xl mx-auto mt-6 bg-white p-6 rounded shadow">
-
-    <h2 class="text-2xl mb-4 font-semibold">لوحة تحكم الفني</h2>
-
-    <h3 class="font-semibold mb-2">مهامي</h3>
-    <table class="w-full table-auto border-collapse border border-gray-300">
-      <thead>
-        <tr class="bg-gray-200">
-          <th class="border border-gray-300 p-2">التاريخ</th>
-          <th class="border border-gray-300 p-2">الوصف</th>
-          <th class="border border-gray-300 p-2">الحالة</th>
-          <th class="border border-gray-300 p-2">الإجراء</th>
-        </tr>
-      </thead>
-      <tbody id="technicienTasksBody"></tbody>
-    </table>
-
-    <!-- تغيير كلمة المرور -->
-    <div id="changePasswordSectionTech" class="border-t pt-4 max-w-md mt-6">
-      <h3 class="font-semibold mb-2">تغيير كلمة المرور</h3>
-      <input type="password" id="currentPasswordTech" placeholder="كلمة المرور الحالية" class="border p-1 mb-2 w-full" />
-      <input type="password" id="newPassword1Tech" placeholder="كلمة المرور الجديدة" class="border p-1 mb-2 w-full" />
-      <input type="password" id="newPassword2Tech" placeholder="تأكيد كلمة المرور الجديدة" class="border p-1 mb-2 w-full" />
-      <button onclick="changePassword()" class="bg-green-600 text-white px-3 py-1 rounded">تغيير كلمة المرور</button>
-      <p id="changePasswordMsgTech" class="mt-2"></p>
-    </div>
+  <!-- Panneau technicien -->
+  <div id="techPanel" class="hidden bg-white p-6 rounded shadow-md w-full max-w-2xl mt-6">
+    <h2 class="text-xl font-bold mb-4">📋 Mes Tâches</h2>
+    <ul id="taskList" class="space-y-2"></ul>
   </div>
 
-<script>
-  const scriptURL = "https://script.google.com/macros/s/AKfycbyv0x9_hqiZw1ZoqAb5mpsYU-CZr_nZJGSUF_XcKRqRkBVpWAYX-e40nilVZEpdg1Wk/exec"; // ضع رابط نشر Google Apps Script هنا
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbz0QW_iHnN-szxYWWtq19uPL3TnpjjXbp6kma5bdLrVyZIeuQ8mZK1_iwISOgYd959A/exec";
+    let currentUser = "";
 
-  let currentUser = null;
-  let currentRole = null;
+    async function login() {
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
 
-  // تسجيل الدخول
-  function login() {
-    const username = document.getElementById("usernameInput").value.trim();
-    const password = document.getElementById("passwordInput").value.trim();
-    const msg = document.getElementById("loginMsg");
-    msg.textContent = "";
+      const res = await fetch(API_URL, {
+        method: "POST",
+        body: new URLSearchParams({ action: "login", username, password }),
+      });
+      const data = await res.json();
 
-    if(!username || !password) {
-      msg.textContent = "يرجى إدخال اسم المستخدم وكلمة المرور.";
-      return;
-    }
-
-    fetch(scriptURL, {
-      method: "POST",
-      body: new URLSearchParams({ action: "login", username, password })
-    })
-    .then(res => res.json())
-    .then(data => {
-      if(data.success) {
+      if (data.success) {
         currentUser = username;
-        currentRole = data.role;
-        document.getElementById("loginSection").classList.add("hidden");
-        if(currentRole === "admin") {
-          showAdminSection();
-        } else if(currentRole === "technicien") {
-          showTechnicienSection();
-        }
-      } else {
-        msg.textContent = data.message || "خطأ في تسجيل الدخول.";
-      }
-    })
-    .catch(() => { msg.textContent = "خطأ في الاتصال بالخادم."; });
-  }
+        document.getElementById("loginForm").classList.add("hidden");
 
-  // عرض قسم المسؤول
-  function showAdminSection() {
-    document.getElementById("adminSection").classList.remove("hidden");
-    loadTasks();
-    loadUsers();
-  }
-
-  // عرض قسم الفني
-  function showTechnicienSection() {
-    document.getElementById("technicienSection").classList.remove("hidden");
-    loadTechnicienTasks();
-  }
-
-  // تحميل كل المهام (للمسؤول)
-  function loadTasks() {
-    fetch(scriptURL, {
-      method: "POST",
-      body: new URLSearchParams({ action: "getTasks", username: currentUser, role: currentRole })
-    })
-    .then(res => res.json())
-    .then(data => {
-      if(data.success) {
-        const tbody = document.getElementById("tasksTableBody");
-        tbody.innerHTML = "";
-        data.tasks.forEach(t => {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td class="border px-2 py-1">${t.date}</td>
-            <td class="border px-2 py-1">${t.technicien}</td>
-            <td class="border px-2 py-1">${t.description}</td>
-            <td class="border px-2 py-1">${t.status}</td>
-          `;
-          tbody.appendChild(tr);
-        });
-      }
-    });
-  }
-
-  // تحميل المستخدمين
-  function loadUsers() {
-    fetch(scriptURL, {
-      method: "POST",
-      body: new URLSearchParams({ action: "getUsers" })
-    })
-    .then(res => res.json())
-    .then(data => {
-      if(data.success) {
-        const ul = document.getElementById("usersList");
-        ul.innerHTML = "";
-        data.users.forEach(u => {
-          const li = document.createElement("li");
-          li.textContent = `${u.username} (${u.role}) `;
-          const delBtn = document.createElement("button");
-          delBtn.textContent = "حذف";
-          delBtn.className = "text-red-600 mr-2";
-          delBtn.onclick = () => deleteUser(u.username);
-          li.appendChild(delBtn);
-          ul.appendChild(li);
-        });
-      }
-    });
-  }
-
-  // إضافة مستخدم
-  function addUser() {
-    const username = document.getElementById("newUsername").value.trim();
-    const password = document.getElementById("newUserPassword").value.trim();
-    const role = document.getElementById("newUserRole").value;
-    const msg = document.getElementById("addUserMsg");
-    msg.textContent = "";
-
-    if(!username || !password) {
-      msg.textContent = "يرجى إدخال اسم مستخدم وكلمة مرور.";
-      return;
-    }
-
-    fetch(scriptURL, {
-      method: "POST",
-      body: new URLSearchParams({ action: "addUser", username, password, role })
-    })
-    .then(res => res.json())
-    .then(data => {
-      if(data.success) {
-        msg.textContent = "تم إضافة المستخدم بنجاح.";
-        loadUsers();
-      } else {
-        msg.textContent = data.message || "حدث خطأ أثناء الإضافة.";
-      }
-    });
-  }
-
-  // حذف مستخدم
-  function deleteUser(username) {
-    if(!confirm(`هل تريد حذف المستخدم ${username}؟`)) return;
-
-    fetch(scriptURL, {
-      method: "POST",
-      body: new URLSearchParams({ action: "deleteUser", username })
-    })
-    .then(res => res.json())
-    .then(data => {
-      if(data.success) {
-        loadUsers();
-      } else {
-        alert(data.message || "خطأ في الحذف.");
-      }
-    });
-  }
-
-  // إضافة مهمة
-  function addTask() {
-    const date = document.getElementById("taskDate").value;
-    const technicien = document.getElementById("taskTechnicien").value.trim();
-    const description = document.getElementById("taskDescription").value.trim();
-    const msg = document.getElementById("addTaskMsg");
-    msg.textContent = "";
-
-    if(!date || !technicien || !description) {
-      msg.textContent = "يرجى ملء جميع الحقول.";
-      return;
-    }
-
-    fetch(scriptURL, {
-      method: "POST",
-      body: new URLSearchParams({ action: "addTask", date, technicien, description })
-    })
-    .then(res => res.json())
-    .then(data => {
-      if(data.success) {
-        msg.textContent = "تم إضافة المهمة.";
-        loadTasks();
-      } else {
-        msg.textContent = data.message || "حدث خطأ أثناء إضافة المهمة.";
-      }
-    });
-  }
-
-  // تحميل مهام الفني فقط
-  function loadTechnicienTasks() {
-    fetch(scriptURL, {
-      method: "POST",
-      body: new URLSearchParams({ action: "getTasks", username: currentUser, role: currentRole })
-    })
-    .then(res => res.json())
-    .then(data => {
-      if(data.success) {
-        const tbody = document.getElementById("technicienTasksBody");
-        tbody.innerHTML = "";
-        data.tasks.forEach(t => {
-          if(t.technicien === currentUser) {
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-              <td class="border px-2 py-1">${t.date}</td>
-              <td class="border px-2 py-1">${t.description}</td>
-              <td class="border px-2 py-1">${t.status}</td>
-              <td class="border px-2 py-1">
-                ${t.status === "معلقة" ? `<button onclick="completeTask('${t.date}','${t.technicien}','${t.description}')" class="bg-green-600 text-white px-2 py-1 rounded">إنهاء</button>` : ""}
-              </td>
-            `;
-            tbody.appendChild(tr);
-          }
-        });
-      }
-    });
-  }
-
-  // إنهاء مهمة
-  function completeTask(date, technicien, description) {
-    if(!confirm("هل أنت متأكد من إنهاء المهمة؟")) return;
-
-    fetch(scriptURL, {
-      method: "POST",
-      body: new URLSearchParams({ action: "completeTask", date, technicien, description })
-    })
-    .then(res => res.json())
-    .then(data => {
-      if(data.success) {
-        loadTechnicienTasks();
-        loadTasks(); // للمسؤول أيضا
-      } else {
-        alert(data.message || "حدث خطأ.");
-      }
-    });
-  }
-
-  // تغيير كلمة المرور (مشترك بين المسؤول والفني)
-  function changePassword() {
-    let username = currentUser;
-    let currentPwd, newPwd1, newPwd2, msgElement;
-
-    if(currentRole === "admin") {
-      currentPwd = document.getElementById("currentPasswordAdmin").value.trim();
-      newPwd1 = document.getElementById("newPassword1Admin").value.trim();
-      newPwd2 = document.getElementById("newPassword2Admin").value.trim();
-      msgElement = document.getElementById("changePasswordMsg");
-    } else {
-      currentPwd = document.getElementById("currentPasswordTech").value.trim();
-      newPwd1 = document.getElementById("newPassword1Tech").value.trim();
-      newPwd2 = document.getElementById("newPassword2Tech").value.trim();
-      msgElement = document.getElementById("changePasswordMsgTech");
-    }
-
-    msgElement.textContent = "";
-
-    if(!currentPwd || !newPwd1 || !newPwd2) {
-      msgElement.textContent = "يرجى ملء جميع الحقول.";
-      return;
-    }
-    if(newPwd1 !== newPwd2) {
-      msgElement.textContent = "كلمتا المرور الجديدتان غير متطابقتين.";
-      return;
-    }
-
-    fetch(scriptURL, {
-      method: "POST",
-      body: new URLSearchParams({
-        action: "changePassword",
-        username,
-        currentPassword: currentPwd,
-        newPassword: newPwd1
-      })
-    })
-    .then(res => res.json())
-    .then(data => {
-      if(data.success) {
-        msgElement.textContent = "تم تغيير كلمة المرور بنجاح.";
-        // مسح الحقول
-        if(currentRole === "admin") {
-          document.getElementById("currentPasswordAdmin").value = "";
-          document.getElementById("newPassword1Admin").value = "";
-          document.getElementById("newPassword2Admin").value = "";
+        if (data.role === "admin") {
+          document.getElementById("adminPanel").classList.remove("hidden");
         } else {
-          document.getElementById("currentPasswordTech").value = "";
-          document.getElementById("newPassword1Tech").value = "";
-          document.getElementById("newPassword2Tech").value = "";
+          document.getElementById("techPanel").classList.remove("hidden");
+          getTasks();
         }
       } else {
-        msgElement.textContent = data.message || "خطأ في تغيير كلمة المرور.";
+        document.getElementById("loginError").classList.remove("hidden");
       }
-    });
-  }
-</script>
+    }
 
+    async function addTask() {
+      const date = document.getElementById("taskDate").value;
+      const technicien = document.getElementById("taskTechnicien").value;
+      const task = document.getElementById("taskDesc").value;
+
+      await fetch(API_URL, {
+        method: "POST",
+        body: new URLSearchParams({
+          action: "addTask",
+          date,
+          technicien,
+          task
+        }),
+      });
+      alert("✅ Tâche ajoutée !");
+    }
+
+    async function addUser() {
+      const username = document.getElementById("newUsername").value;
+      const password = document.getElementById("newPassword").value;
+      const role = document.getElementById("newRole").value;
+
+      await fetch(API_URL, {
+        method: "POST",
+        body: new URLSearchParams({
+          action: "addUser",
+          username,
+          password,
+          role
+        }),
+      });
+      alert("👤 Utilisateur ajouté !");
+    }
+
+    async function getTasks() {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        body: new URLSearchParams({ action: "getTasks", technicien: currentUser }),
+      });
+      const data = await res.json();
+
+      const list = document.getElementById("taskList");
+      list.innerHTML = "";
+
+      data.tasks.forEach((task) => {
+        const li = document.createElement("li");
+        li.className = "border p-2 flex justify-between items-center";
+        li.innerHTML = `
+          <span>${task.date} - ${task.task} (${task.status})</span>
+          ${task.status !== "Complétée" ? `<button onclick="completeTask('${task.date}','${task.task}')" class="bg-blue-500 text-white px-2 py-1 rounded">✅ Terminer</button>` : ""}
+        `;
+        list.appendChild(li);
+      });
+    }
+
+    async function completeTask(date, task) {
+      await fetch(API_URL, {
+        method: "POST",
+        body: new URLSearchParams({
+          action: "completeTask",
+          date,
+          technicien: currentUser,
+          task
+        }),
+      });
+      alert("🎉 Tâche complétée !");
+      getTasks();
+    }
+  </script>
 </body>
 </html>
