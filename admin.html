@@ -1,39 +1,161 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin - Gestion des Tâches</title>
-  <link rel="stylesheet" href="style.css">
-  <script src="script.js"></script>
-</head>
-<body>
-  <h2>Ajouter une tâche</h2>
-  <input id="date" type="date"><br>
-  <input id="tech" placeholder="Technicien"><br>
-  <input id="task" placeholder="Tâche"><br>
-  <button onclick="ajouter()">Ajouter</button>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Firebase SDKs -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+    import { getFirestore, collection, addDoc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
-  <h3>Toutes les tâches</h3>
-  <ul id="liste"></ul>
+    // Global variables (provided by the Canvas environment)
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-  <script>
-    async function ajouter() {
-      const task = {
-        date: document.getElementById('date').value,
-        tech: document.getElementById('tech').value,
-        task: document.getElementById('task').value
-      };
-      await addTask(task);
-      location.reload();
+    // Initialize Firebase
+    let app;
+    let db;
+    let auth;
+    let currentUserId = null;
+
+    // Initialize Firebase and set up authentication
+    async function initializeFirebase() {
+      try {
+        app = initializeApp(firebaseConfig);
+        db = getFirestore(app);
+        auth = getAuth(app);
+
+        // Sign in user
+        if (initialAuthToken) {
+          await signInWithCustomToken(auth, initialAuthToken);
+          console.log("Signed in with custom token.");
+        } else {
+          await signInAnonymously(auth);
+          console.log("Signed in anonymously.");
+        }
+
+        // Listen for auth state changes
+        onAuthStateChanged(auth, (user) => {
+          if (user) {
+            currentUserId = user.uid;
+            console.log("User ID:", currentUserId);
+            document.getElementById('user-id-display').innerText = `Your User ID: ${currentUserId}`;
+            setupRealtimeTasksListener(); // Start listening for tasks once authenticated
+          } else {
+            currentUserId = null;
+            console.log("No user signed in.");
+            document.getElementById('user-id-display').innerText = `Your User ID: Not signed in`;
+          }
+        });
+      } catch (error) {
+        console.error("Error initializing Firebase or signing in:", error);
+      }
     }
 
-    getAllTasks().then(tasks => {
-      const ul = document.getElementById("liste");
-      tasks.slice(1).forEach((r, i) => {
-        const li = document.createElement("li");
-        li.innerText = `${r[0]} | ${r[1]} | ${r[2]} | ${r[3]}`;
-        ul.appendChild(li);
+    // Function to add a task to Firestore
+    window.addTask = async function(task) {
+      if (!db || !currentUserId) {
+        console.error("Firestore not initialized or user not authenticated.");
+        return;
+      }
+      try {
+        // Store public data in /artifacts/{appId}/public/data/tasks
+        const tasksCollectionRef = collection(db, `artifacts/${appId}/public/data/tasks`);
+        await addDoc(tasksCollectionRef, {
+          date: task.date,
+          tech: task.tech,
+          task: task.task,
+          userId: currentUserId, // Store the user ID who created the task
+          createdAt: new Date() // Timestamp for sorting
+        });
+        console.log("Task added successfully!");
+        // Clear input fields after adding
+        document.getElementById('date').value = '';
+        document.getElementById('tech').value = '';
+        document.getElementById('task').value = '';
+      } catch (e) {
+        console.error("Error adding document: ", e);
+      }
+    };
+
+    // Set up real-time listener for tasks
+    function setupRealtimeTasksListener() {
+      if (!db) {
+        console.error("Firestore not initialized for listener.");
+        return;
+      }
+
+      // Query public data from /artifacts/{appId}/public/data/tasks
+      const tasksCollectionRef = collection(db, `artifacts/${appId}/public/data/tasks`);
+      const q = query(tasksCollectionRef); // You can add orderBy here if needed, but for simplicity, we'll sort in JS
+
+      onSnapshot(q, (snapshot) => {
+        const ul = document.getElementById("liste");
+        ul.innerHTML = ''; // Clear existing list items
+
+        const tasks = [];
+        snapshot.forEach((doc) => {
+          tasks.push({ id: doc.id, ...doc.data() });
+        });
+
+        // Sort tasks by creation date (newest first)
+        tasks.sort((a, b) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime());
+
+        tasks.forEach((task) => {
+          const li = document.createElement("li");
+          li.className = 'bg-gray-100 p-3 rounded-lg mb-2 flex flex-col sm:flex-row justify-between items-start sm:items-center shadow-sm';
+          li.innerHTML = `
+            <div class="flex-grow">
+              <p class="font-semibold text-blue-700">${task.date} | ${task.tech}</p>
+              <p class="text-gray-800">${task.task}</p>
+            </div>
+            <div class="text-xs text-gray-500 mt-2 sm:mt-0 sm:ml-4">
+              Added by: ${task.userId}
+            </div>
+          `;
+          ul.appendChild(li);
+        });
+        console.log("Tasks updated in real-time.");
+      }, (error) => {
+        console.error("Error listening to tasks:", error);
       });
-    });
+    }
+
+    // Initialize Firebase when the window loads
+    window.onload = initializeFirebase;
   </script>
+</head>
+<body class="bg-gradient-to-br from-blue-100 to-indigo-200 min-h-screen font-sans antialiased p-4 sm:p-6">
+  <div class="max-w-3xl mx-auto bg-white p-6 sm:p-8 rounded-xl shadow-2xl space-y-6">
+    <h1 class="text-3xl sm:text-4xl font-extrabold text-center text-gray-800 mb-8">Admin Task Management</h1>
+
+    <div id="user-id-display" class="text-sm text-center text-gray-600 mb-4 p-2 bg-blue-50 rounded-md">
+      Your User ID: Loading...
+    </div>
+
+    <div class="space-y-4">
+      <h2 class="text-2xl font-bold text-gray-700">Add a New Task</h2>
+      <input id="date" type="date" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2">
+      <input id="tech" placeholder="Technician Name" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2">
+      <input id="task" placeholder="Task Description" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4">
+      <button onclick="addTask({ date: document.getElementById('date').value, tech: document.getElementById('tech').value, task: document.getElementById('task').value })"
+              class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-lg">
+        Add Task
+      </button>
+    </div>
+
+    <div class="space-y-4 mt-8">
+      <h3 class="text-2xl font-bold text-gray-700">All Tasks</h3>
+      <ul id="liste" class="space-y-3">
+        <!-- Tasks will be loaded here dynamically -->
+        <li class="text-gray-500 text-center p-4">Loading tasks...</li>
+      </ul>
+    </div>
+  </div>
 </body>
 </html>
