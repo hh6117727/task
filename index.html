@@ -1,579 +1,387 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gestion des Tâches Techniques</title>
+  <meta charset="UTF-8" />
+  <title>تطبيق إدارة المهام</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            primary: '#3b82f6',
-            secondary: '#10b981',
-            danger: '#ef4444',
-            warning: '#f59e0b',
-            dark: '#1f2937'
-          }
-        }
-      }
-    }
-  </script>
-  <style>
-    .task-item {
-      transition: all 0.3s ease;
-    }
-    .task-item:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    }
-    .status-badge {
-      font-size: 0.75rem;
-      padding: 0.25rem 0.5rem;
-      border-radius: 9999px;
-    }
-    .status-pending {
-      background-color: #fef3c7;
-      color: #d97706;
-    }
-    .status-done {
-      background-color: #dcfce7;
-      color: #16a34a;
-    }
-    .status-progress {
-      background-color: #dbeafe;
-      color: #2563eb;
-    }
-    .fade-in {
-      animation: fadeIn 0.5s ease-in;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-  </style>
 </head>
-<body class="bg-gradient-to-br from-gray-50 to-gray-200 min-h-screen p-4 md:p-8">
-  <div class="max-w-4xl mx-auto">
-    <header class="text-center mb-8">
-      <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-2">Gestion des Tâches Techniques</h1>
-      <p class="text-gray-600">Suivi et gestion des interventions techniques</p>
-    </header>
+<body class="bg-gray-100 p-6 font-sans">
 
-    <!-- Écran de connexion -->
-    <div id="login" class="max-w-md mx-auto bg-white rounded-xl shadow-lg overflow-hidden fade-in">
-      <div class="p-6">
-        <div class="text-center mb-6">
-          <div class="mx-auto bg-gray-200 border-2 border-dashed rounded-xl w-16 h-16 flex items-center justify-center mb-4">
-            <i class="fas fa-user-lock text-gray-500 text-2xl"></i>
-          </div>
-          <h2 class="text-2xl font-bold text-gray-800">Connexion</h2>
-          <p class="text-gray-600 mt-1">Accédez à votre espace de travail</p>
-        </div>
-        
-        <div class="space-y-4">
-          <div>
-            <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Nom d'utilisateur</label>
-            <input id="username" type="text" placeholder="Entrez votre nom d'utilisateur" 
-                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition">
-          </div>
-          
-          <div>
-            <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Mot de passe</label>
-            <input id="password" type="password" placeholder="Entrez votre mot de passe" 
-                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition">
-          </div>
-          
-          <div class="flex items-center">
-            <input id="remember" type="checkbox" class="h-4 w-4 text-primary rounded">
-            <label for="remember" class="ml-2 block text-sm text-gray-700">Se souvenir de moi</label>
-          </div>
-          
-          <button onclick="login()" class="w-full bg-primary hover:bg-blue-600 text-white font-medium py-2.5 px-4 rounded-lg transition duration-300 flex items-center justify-center">
-            <i class="fas fa-sign-in-alt mr-2"></i> Se connecter
-          </button>
-        </div>
-        
-        <p id="loginError" class="mt-4 text-center text-danger hidden">
-          <i class="fas fa-exclamation-circle mr-1"></i> Identifiants incorrects. Veuillez réessayer.
-        </p>
-      </div>
+  <div id="loginSection" class="max-w-md mx-auto bg-white p-6 rounded shadow">
+    <h2 class="text-xl mb-4 font-semibold">تسجيل الدخول</h2>
+    <input type="text" id="usernameInput" placeholder="اسم المستخدم" class="border p-2 w-full mb-3" />
+    <input type="password" id="passwordInput" placeholder="كلمة المرور" class="border p-2 w-full mb-3" />
+    <button onclick="login()" class="bg-blue-600 text-white px-4 py-2 rounded w-full">دخول</button>
+    <p id="loginMsg" class="text-red-600 mt-2"></p>
+  </div>
+
+  <div id="adminSection" class="hidden max-w-4xl mx-auto mt-6 bg-white p-6 rounded shadow">
+
+    <h2 class="text-2xl mb-4 font-semibold">لوحة تحكم المسؤول</h2>
+
+    <!-- إضافة مهمة -->
+    <div class="mb-6 border p-4 rounded">
+      <h3 class="font-semibold mb-2">إضافة مهمة جديدة</h3>
+      <input type="date" id="taskDate" class="border p-1 mb-2 w-full" />
+      <input type="text" id="taskTechnicien" placeholder="اسم الفني" class="border p-1 mb-2 w-full" />
+      <textarea id="taskDescription" placeholder="وصف المهمة" class="border p-1 mb-2 w-full"></textarea>
+      <button onclick="addTask()" class="bg-green-600 text-white px-3 py-1 rounded">إضافة المهمة</button>
+      <p id="addTaskMsg" class="mt-1"></p>
     </div>
 
-    <!-- Tableau de bord -->
-    <div id="dashboard" class="hidden">
-      <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-6">
-        <div class="p-4 sm:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center">
-          <div>
-            <h2 class="text-xl sm:text-2xl font-bold text-gray-800">Bienvenue, <span id="userLabel" class="text-primary"></span></h2>
-            <p class="text-gray-600" id="roleLabel">Chargement de votre rôle...</p>
-          </div>
-          
-          <div class="mt-4 sm:mt-0 flex space-x-3">
-            <button id="filterButton" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition flex items-center">
-              <i class="fas fa-filter mr-2"></i> Filtrer
-            </button>
-            <button onclick="logout()" class="bg-danger hover:bg-red-600 text-white px-4 py-2 rounded-lg transition flex items-center">
-              <i class="fas fa-sign-out-alt mr-2"></i> Déconnexion
-            </button>
-          </div>
-        </div>
-      </div>
+    <!-- قائمة المهام -->
+    <div class="mb-6">
+      <h3 class="font-semibold mb-2">جميع المهام</h3>
+      <table class="w-full table-auto border-collapse border border-gray-300">
+        <thead>
+          <tr class="bg-gray-200">
+            <th class="border border-gray-300 p-2">التاريخ</th>
+            <th class="border border-gray-300 p-2">الفني</th>
+            <th class="border border-gray-300 p-2">الوصف</th>
+            <th class="border border-gray-300 p-2">الحالة</th>
+          </tr>
+        </thead>
+        <tbody id="tasksTableBody"></tbody>
+      </table>
+    </div>
 
-      <!-- Filtres -->
-      <div id="filterPanel" class="bg-white rounded-xl shadow-lg p-4 mb-6 hidden">
-        <h3 class="font-semibold text-lg mb-3">Filtrer les tâches</h3>
-        <div class="flex flex-wrap gap-3">
-          <button onclick="filterTasks('all')" class="filter-btn active bg-primary text-white px-3 py-1 rounded-full text-sm">
-            Toutes
-          </button>
-          <button onclick="filterTasks('En attente')" class="filter-btn bg-warning text-white px-3 py-1 rounded-full text-sm">
-            En attente
-          </button>
-          <button onclick="filterTasks('En cours')" class="filter-btn bg-blue-500 text-white px-3 py-1 rounded-full text-sm">
-            En cours
-          </button>
-          <button onclick="filterTasks('Terminée')" class="filter-btn bg-secondary text-white px-3 py-1 rounded-full text-sm">
-            Terminées
-          </button>
-        </div>
-      </div>
+    <!-- إدارة المستخدمين -->
+    <div class="mb-6 border-t pt-4">
+      <h3 class="font-semibold mb-2">إدارة المستخدمين</h3>
+      <input type="text" id="newUsername" placeholder="اسم المستخدم" class="border p-1 mb-2 w-full max-w-xs" />
+      <input type="password" id="newUserPassword" placeholder="كلمة المرور" class="border p-1 mb-2 w-full max-w-xs" />
+      <select id="newUserRole" class="border p-1 mb-2 w-full max-w-xs">
+        <option value="technicien">فني</option>
+        <option value="admin">مسؤول</option>
+      </select>
+      <button onclick="addUser()" class="bg-blue-600 text-white px-3 py-1 rounded mb-4">إضافة مستخدم</button>
+      <p id="addUserMsg"></p>
 
-      <!-- Statistiques -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div class="bg-white rounded-xl shadow p-5 flex items-center">
-          <div class="bg-blue-100 p-3 rounded-full mr-4">
-            <i class="fas fa-tasks text-blue-600 text-xl"></i>
-          </div>
-          <div>
-            <p class="text-gray-500 text-sm">Tâches totales</p>
-            <p class="text-2xl font-bold" id="totalTasks">0</p>
-          </div>
-        </div>
-        
-        <div class="bg-white rounded-xl shadow p-5 flex items-center">
-          <div class="bg-yellow-100 p-3 rounded-full mr-4">
-            <i class="fas fa-clock text-yellow-600 text-xl"></i>
-          </div>
-          <div>
-            <p class="text-gray-500 text-sm">En attente</p>
-            <p class="text-2xl font-bold" id="pendingTasks">0</p>
-          </div>
-        </div>
-        
-        <div class="bg-white rounded-xl shadow p-5 flex items-center">
-          <div class="bg-green-100 p-3 rounded-full mr-4">
-            <i class="fas fa-check-circle text-green-600 text-xl"></i>
-          </div>
-          <div>
-            <p class="text-gray-500 text-sm">Terminées</p>
-            <p class="text-2xl font-bold" id="completedTasks">0</p>
-          </div>
-        </div>
-      </div>
+      <h4 class="font-semibold mb-2">قائمة المستخدمين</h4>
+      <ul id="usersList" class="list-disc pl-5"></ul>
+    </div>
 
-      <!-- Liste des tâches -->
-      <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-6">
-        <div class="p-4 sm:p-6">
-          <div class="flex justify-between items-center mb-4">
-            <h3 class="text-xl font-bold text-gray-800">Mes Tâches</h3>
-            <button id="refreshTasks" class="text-primary hover:text-blue-700">
-              <i class="fas fa-sync-alt"></i>
-            </button>
-          </div>
-          
-          <div id="tasks" class="space-y-3">
-            <div class="text-center py-10">
-              <div class="mx-auto bg-gray-100 rounded-full w-16 h-16 flex items-center justify-center mb-4">
-                <i class="fas fa-spinner fa-spin text-gray-400 text-2xl"></i>
-              </div>
-              <p class="text-gray-500">Chargement des tâches...</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Panneau d'administration -->
-      <div id="adminPanel" class="hidden bg-white rounded-xl shadow-lg overflow-hidden mb-6 fade-in">
-        <div class="p-4 sm:p-6">
-          <h3 class="text-xl font-bold text-gray-800 mb-4">Ajouter une nouvelle tâche</h3>
-          
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
-              <input id="newDate" type="date" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent transition">
-            </div>
-            
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Technicien</label>
-              <input id="newTech" type="text" placeholder="Nom du technicien" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent transition">
-            </div>
-            
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Tâche</label>
-              <input id="newTask" type="text" placeholder="Description de la tâche" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent transition">
-            </div>
-          </div>
-          
-          <div class="flex justify-end">
-            <button onclick="addTask()" class="bg-secondary hover:bg-green-600 text-white font-medium py-2 px-6 rounded-lg transition flex items-center">
-              <i class="fas fa-plus-circle mr-2"></i> Ajouter la tâche
-            </button>
-          </div>
-        </div>
-      </div>
+    <!-- تغيير كلمة المرور -->
+    <div id="changePasswordSectionAdmin" class="border-t pt-4 max-w-md">
+      <h3 class="font-semibold mb-2">تغيير كلمة المرور</h3>
+      <input type="password" id="currentPasswordAdmin" placeholder="كلمة المرور الحالية" class="border p-1 mb-2 w-full" />
+      <input type="password" id="newPassword1Admin" placeholder="كلمة المرور الجديدة" class="border p-1 mb-2 w-full" />
+      <input type="password" id="newPassword2Admin" placeholder="تأكيد كلمة المرور الجديدة" class="border p-1 mb-2 w-full" />
+      <button onclick="changePassword()" class="bg-green-600 text-white px-3 py-1 rounded">تغيير كلمة المرور</button>
+      <p id="changePasswordMsg" class="mt-2"></p>
     </div>
   </div>
 
-  <script>
-    const scriptURL = "https://script.google.com/macros/s/AKfycbyv0x9_hqiZw1ZoqAb5mpsYU-CZr_nZJGSUF_XcKRqRkBVpWAYX-e40nilVZEpdg1Wk/exec";
-    let currentUser = "", currentRole = "";
-    let allTasks = [];
+  <div id="technicienSection" class="hidden max-w-4xl mx-auto mt-6 bg-white p-6 rounded shadow">
 
-    // Simuler des tâches pour la démonstration
-    const demoTasks = [
-      { date: "2023-09-15", technicien: "Jean Dupont", tache: "Maintenance serveur principal", statut: "En attente" },
-      { date: "2023-09-16", technicien: "Marie Curie", tache: "Mise à jour des postes clients", statut: "En cours" },
-      { date: "2023-09-10", technicien: "Pierre Martin", tache: "Installation nouveau switch", statut: "Terminée" },
-      { date: "2023-09-18", technicien: "Jean Dupont", tache: "Vérification système de sauvegarde", statut: "En attente" }
-    ];
+    <h2 class="text-2xl mb-4 font-semibold">لوحة تحكم الفني</h2>
 
-    document.addEventListener('DOMContentLoaded', function() {
-      // Initialiser les écouteurs d'événements
-      document.getElementById('filterButton').addEventListener('click', toggleFilterPanel);
-      document.getElementById('refreshTasks').addEventListener('click', loadTasks);
-      
-      // Simuler la connexion pour la démonstration
-      setTimeout(() => {
-        // Pour la démo, simuler une connexion réussie
-        simulateLogin('admin');
-      }, 2000);
-    });
+    <h3 class="font-semibold mb-2">مهامي</h3>
+    <table class="w-full table-auto border-collapse border border-gray-300">
+      <thead>
+        <tr class="bg-gray-200">
+          <th class="border border-gray-300 p-2">التاريخ</th>
+          <th class="border border-gray-300 p-2">الوصف</th>
+          <th class="border border-gray-300 p-2">الحالة</th>
+          <th class="border border-gray-300 p-2">الإجراء</th>
+        </tr>
+      </thead>
+      <tbody id="technicienTasksBody"></tbody>
+    </table>
 
-    function toggleFilterPanel() {
-      const panel = document.getElementById('filterPanel');
-      panel.classList.toggle('hidden');
+    <!-- تغيير كلمة المرور -->
+    <div id="changePasswordSectionTech" class="border-t pt-4 max-w-md mt-6">
+      <h3 class="font-semibold mb-2">تغيير كلمة المرور</h3>
+      <input type="password" id="currentPasswordTech" placeholder="كلمة المرور الحالية" class="border p-1 mb-2 w-full" />
+      <input type="password" id="newPassword1Tech" placeholder="كلمة المرور الجديدة" class="border p-1 mb-2 w-full" />
+      <input type="password" id="newPassword2Tech" placeholder="تأكيد كلمة المرور الجديدة" class="border p-1 mb-2 w-full" />
+      <button onclick="changePassword()" class="bg-green-600 text-white px-3 py-1 rounded">تغيير كلمة المرور</button>
+      <p id="changePasswordMsgTech" class="mt-2"></p>
+    </div>
+  </div>
+
+<script>
+  const scriptURL = "YOUR_DEPLOYED_WEB_APP_URL"; // ضع رابط نشر Google Apps Script هنا
+
+  let currentUser = null;
+  let currentRole = null;
+
+  // تسجيل الدخول
+  function login() {
+    const username = document.getElementById("usernameInput").value.trim();
+    const password = document.getElementById("passwordInput").value.trim();
+    const msg = document.getElementById("loginMsg");
+    msg.textContent = "";
+
+    if(!username || !password) {
+      msg.textContent = "يرجى إدخال اسم المستخدم وكلمة المرور.";
+      return;
     }
 
-    function login() {
-      const username = document.getElementById("username").value;
-      const password = document.getElementById("password").value;
-
-      // Validation
-      if (!username || !password) {
-        showLoginError("Veuillez remplir tous les champs");
-        return;
-      }
-
-      // Simuler la connexion pour la démonstration
-      simulateLogin(username);
-      
-      // Dans un scénario réel, vous utiliseriez ce code:
-      /*
-      fetch(scriptURL, {
-        method: "POST",
-        body: new URLSearchParams({ action: "login", username, password })
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          currentUser = username;
-          currentRole = data.role;
-          document.getElementById("login").classList.add("hidden");
-          document.getElementById("dashboard").classList.remove("hidden");
-          document.getElementById("userLabel").textContent = username;
-          document.getElementById("roleLabel").textContent = `Rôle: ${data.role === "admin" ? "Administrateur" : "Technicien"}`;
-          
-          if (currentRole === "admin") {
-            document.getElementById("adminPanel").classList.remove("hidden");
-          }
-          
-          loadTasks();
-        } else {
-          showLoginError("Identifiants incorrects");
+    fetch(scriptURL, {
+      method: "POST",
+      body: new URLSearchParams({ action: "login", username, password })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if(data.success) {
+        currentUser = username;
+        currentRole = data.role;
+        document.getElementById("loginSection").classList.add("hidden");
+        if(currentRole === "admin") {
+          showAdminSection();
+        } else if(currentRole === "technicien") {
+          showTechnicienSection();
         }
-      })
-      .catch(error => {
-        console.error("Erreur:", error);
-        showLoginError("Erreur de connexion au serveur");
-      });
-      */
-    }
-
-    function simulateLogin(username) {
-      currentUser = username;
-      currentRole = username === "admin" ? "admin" : "technicien";
-      
-      document.getElementById("login").classList.add("hidden");
-      document.getElementById("dashboard").classList.remove("hidden");
-      document.getElementById("userLabel").textContent = username;
-      document.getElementById("roleLabel").textContent = `Rôle: ${currentRole === "admin" ? "Administrateur" : "Technicien"}`;
-      
-      if (currentRole === "admin") {
-        document.getElementById("adminPanel").classList.remove("hidden");
-      }
-      
-      // Utiliser les tâches de démonstration
-      allTasks = [...demoTasks];
-      renderTasks(allTasks);
-      updateTaskStats();
-    }
-
-    function showLoginError(message) {
-      const errorEl = document.getElementById("loginError");
-      errorEl.textContent = message;
-      errorEl.classList.remove("hidden");
-      
-      // Effacer l'erreur après 5 secondes
-      setTimeout(() => {
-        errorEl.classList.add("hidden");
-      }, 5000);
-    }
-
-    function logout() {
-      document.getElementById("dashboard").classList.add("hidden");
-      document.getElementById("login").classList.remove("hidden");
-      document.getElementById("username").value = "";
-      document.getElementById("password").value = "";
-      document.getElementById("loginError").classList.add("hidden");
-      
-      if (currentRole === "admin") {
-        document.getElementById("adminPanel").classList.add("hidden");
-      }
-      
-      currentUser = "";
-      currentRole = "";
-    }
-
-    function loadTasks() {
-      // Simuler le chargement
-      const tasksContainer = document.getElementById("tasks");
-      tasksContainer.innerHTML = `
-        <div class="text-center py-10">
-          <div class="mx-auto bg-gray-100 rounded-full w-16 h-16 flex items-center justify-center mb-4">
-            <i class="fas fa-spinner fa-spin text-gray-400 text-2xl"></i>
-          </div>
-          <p class="text-gray-500">Chargement des tâches...</p>
-        </div>
-      `;
-      
-      // Simuler un délai de chargement
-      setTimeout(() => {
-        // Dans un scénario réel, vous utiliseriez:
-        /*
-        fetch(scriptURL, {
-          method: "POST",
-          body: new URLSearchParams({ action: "getTasks", username: currentUser })
-        })
-        .then(res => res.json())
-        .then(tasks => {
-          allTasks = tasks;
-          renderTasks(tasks);
-          updateTaskStats();
-        });
-        */
-        
-        // Pour la démo, utiliser les tâches existantes
-        renderTasks(allTasks);
-        updateTaskStats();
-      }, 1000);
-    }
-
-    function renderTasks(tasks) {
-      if (tasks.length === 0) {
-        document.getElementById("tasks").innerHTML = `
-          <div class="text-center py-10">
-            <div class="mx-auto bg-gray-100 rounded-full w-16 h-16 flex items-center justify-center mb-4">
-              <i class="fas fa-inbox text-gray-400 text-2xl"></i>
-            </div>
-            <p class="text-gray-500">Aucune tâche disponible</p>
-            <p class="text-gray-400 text-sm mt-1">Créez une nouvelle tâche ou revenez plus tard</p>
-          </div>
-        `;
-        return;
-      }
-
-      let html = "";
-      
-      tasks.forEach(t => {
-        // Déterminer la classe CSS en fonction du statut
-        let statusClass = "status-pending";
-        if (t.statut === "Terminée") statusClass = "status-done";
-        if (t.statut === "En cours") statusClass = "status-progress";
-        
-        html += `
-          <div class="task-item bg-white border border-gray-200 rounded-lg p-4">
-            <div class="flex justify-between items-start">
-              <div>
-                <div class="flex items-center mb-2">
-                  <span class="${statusClass} status-badge">${t.statut}</span>
-                  <span class="ml-2 text-sm text-gray-500">${t.date}</span>
-                </div>
-                <h4 class="font-medium text-gray-800">${t.tache}</h4>
-                <p class="text-sm text-gray-600 mt-1">Technicien: ${t.technicien}</p>
-              </div>
-              
-              ${currentRole === "technicien" && t.statut === "En attente" ? `
-                <div class="flex space-x-2">
-                  <button onclick="startTask('${t.tache}')" class="text-blue-600 hover:text-blue-800">
-                    <i class="fas fa-play-circle"></i>
-                  </button>
-                  <button onclick="markDone('${t.tache}')" class="text-green-600 hover:text-green-800">
-                    <i class="fas fa-check-circle"></i>
-                  </button>
-                </div>
-              ` : ""}
-              
-              ${currentRole === "technicien" && t.statut === "En cours" ? `
-                <button onclick="markDone('${t.tache}')" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-lg text-sm">
-                  Terminer
-                </button>
-              ` : ""}
-            </div>
-          </div>
-        `;
-      });
-      
-      document.getElementById("tasks").innerHTML = html;
-    }
-
-    function updateTaskStats() {
-      const totalTasks = allTasks.length;
-      const pendingTasks = allTasks.filter(t => t.statut === "En attente").length;
-      const completedTasks = allTasks.filter(t => t.statut === "Terminée").length;
-      
-      document.getElementById("totalTasks").textContent = totalTasks;
-      document.getElementById("pendingTasks").textContent = pendingTasks;
-      document.getElementById("completedTasks").textContent = completedTasks;
-    }
-
-    function filterTasks(status) {
-      // Mettre à jour les boutons de filtre
-      document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.classList.remove('active', 'bg-primary', 'text-white');
-      });
-      
-      const activeBtn = event.target;
-      activeBtn.classList.add('active', 'bg-primary', 'text-white');
-      
-      if (status === 'all') {
-        renderTasks(allTasks);
       } else {
-        const filteredTasks = allTasks.filter(t => t.statut === status);
-        renderTasks(filteredTasks);
+        msg.textContent = data.message || "خطأ في تسجيل الدخول.";
       }
+    })
+    .catch(() => { msg.textContent = "خطأ في الاتصال بالخادم."; });
+  }
+
+  // عرض قسم المسؤول
+  function showAdminSection() {
+    document.getElementById("adminSection").classList.remove("hidden");
+    loadTasks();
+    loadUsers();
+  }
+
+  // عرض قسم الفني
+  function showTechnicienSection() {
+    document.getElementById("technicienSection").classList.remove("hidden");
+    loadTechnicienTasks();
+  }
+
+  // تحميل كل المهام (للمسؤول)
+  function loadTasks() {
+    fetch(scriptURL, {
+      method: "POST",
+      body: new URLSearchParams({ action: "getTasks", username: currentUser, role: currentRole })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if(data.success) {
+        const tbody = document.getElementById("tasksTableBody");
+        tbody.innerHTML = "";
+        data.tasks.forEach(t => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td class="border px-2 py-1">${t.date}</td>
+            <td class="border px-2 py-1">${t.technicien}</td>
+            <td class="border px-2 py-1">${t.description}</td>
+            <td class="border px-2 py-1">${t.status}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+    });
+  }
+
+  // تحميل المستخدمين
+  function loadUsers() {
+    fetch(scriptURL, {
+      method: "POST",
+      body: new URLSearchParams({ action: "getUsers" })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if(data.success) {
+        const ul = document.getElementById("usersList");
+        ul.innerHTML = "";
+        data.users.forEach(u => {
+          const li = document.createElement("li");
+          li.textContent = `${u.username} (${u.role}) `;
+          const delBtn = document.createElement("button");
+          delBtn.textContent = "حذف";
+          delBtn.className = "text-red-600 mr-2";
+          delBtn.onclick = () => deleteUser(u.username);
+          li.appendChild(delBtn);
+          ul.appendChild(li);
+        });
+      }
+    });
+  }
+
+  // إضافة مستخدم
+  function addUser() {
+    const username = document.getElementById("newUsername").value.trim();
+    const password = document.getElementById("newUserPassword").value.trim();
+    const role = document.getElementById("newUserRole").value;
+    const msg = document.getElementById("addUserMsg");
+    msg.textContent = "";
+
+    if(!username || !password) {
+      msg.textContent = "يرجى إدخال اسم مستخدم وكلمة مرور.";
+      return;
     }
 
-    function addTask() {
-      const date = document.getElementById("newDate").value;
-      const technicien = document.getElementById("newTech").value;
-      const tache = document.getElementById("newTask").value;
-      
-      // Validation
-      if (!date || !technicien || !tache) {
-        alert("Veuillez remplir tous les champs");
-        return;
+    fetch(scriptURL, {
+      method: "POST",
+      body: new URLSearchParams({ action: "addUser", username, password, role })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if(data.success) {
+        msg.textContent = "تم إضافة المستخدم بنجاح.";
+        loadUsers();
+      } else {
+        msg.textContent = data.message || "حدث خطأ أثناء الإضافة.";
       }
-      
-      // Ajouter la nouvelle tâche
-      const newTask = {
-        date,
-        technicien,
-        tache,
-        statut: "En attente"
-      };
-      
-      allTasks.push(newTask);
-      
-      // Dans un scénario réel, vous utiliseriez:
-      /*
-      fetch(scriptURL, {
-        method: "POST",
-        body: new URLSearchParams({ action: "addTask", date, technicien, tache })
-      })
-      .then(res => res.json())
-      .then(() => {
+    });
+  }
+
+  // حذف مستخدم
+  function deleteUser(username) {
+    if(!confirm(`هل تريد حذف المستخدم ${username}؟`)) return;
+
+    fetch(scriptURL, {
+      method: "POST",
+      body: new URLSearchParams({ action: "deleteUser", username })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if(data.success) {
+        loadUsers();
+      } else {
+        alert(data.message || "خطأ في الحذف.");
+      }
+    });
+  }
+
+  // إضافة مهمة
+  function addTask() {
+    const date = document.getElementById("taskDate").value;
+    const technicien = document.getElementById("taskTechnicien").value.trim();
+    const description = document.getElementById("taskDescription").value.trim();
+    const msg = document.getElementById("addTaskMsg");
+    msg.textContent = "";
+
+    if(!date || !technicien || !description) {
+      msg.textContent = "يرجى ملء جميع الحقول.";
+      return;
+    }
+
+    fetch(scriptURL, {
+      method: "POST",
+      body: new URLSearchParams({ action: "addTask", date, technicien, description })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if(data.success) {
+        msg.textContent = "تم إضافة المهمة.";
         loadTasks();
-        document.getElementById("newDate").value = "";
-        document.getElementById("newTech").value = "";
-        document.getElementById("newTask").value = "";
-      });
-      */
-      
-      // Pour la démo, mettre à jour l'interface
-      renderTasks(allTasks);
-      updateTaskStats();
-      
-      // Réinitialiser le formulaire
-      document.getElementById("newDate").value = "";
-      document.getElementById("newTech").value = "";
-      document.getElementById("newTask").value = "";
-      
-      // Afficher un message de succès
-      showNotification("Tâche ajoutée avec succès!", "success");
+      } else {
+        msg.textContent = data.message || "حدث خطأ أثناء إضافة المهمة.";
+      }
+    });
+  }
+
+  // تحميل مهام الفني فقط
+  function loadTechnicienTasks() {
+    fetch(scriptURL, {
+      method: "POST",
+      body: new URLSearchParams({ action: "getTasks", username: currentUser, role: currentRole })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if(data.success) {
+        const tbody = document.getElementById("technicienTasksBody");
+        tbody.innerHTML = "";
+        data.tasks.forEach(t => {
+          if(t.technicien === currentUser) {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td class="border px-2 py-1">${t.date}</td>
+              <td class="border px-2 py-1">${t.description}</td>
+              <td class="border px-2 py-1">${t.status}</td>
+              <td class="border px-2 py-1">
+                ${t.status === "معلقة" ? `<button onclick="completeTask('${t.date}','${t.technicien}','${t.description}')" class="bg-green-600 text-white px-2 py-1 rounded">إنهاء</button>` : ""}
+              </td>
+            `;
+            tbody.appendChild(tr);
+          }
+        });
+      }
+    });
+  }
+
+  // إنهاء مهمة
+  function completeTask(date, technicien, description) {
+    if(!confirm("هل أنت متأكد من إنهاء المهمة؟")) return;
+
+    fetch(scriptURL, {
+      method: "POST",
+      body: new URLSearchParams({ action: "completeTask", date, technicien, description })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if(data.success) {
+        loadTechnicienTasks();
+        loadTasks(); // للمسؤول أيضا
+      } else {
+        alert(data.message || "حدث خطأ.");
+      }
+    });
+  }
+
+  // تغيير كلمة المرور (مشترك بين المسؤول والفني)
+  function changePassword() {
+    let username = currentUser;
+    let currentPwd, newPwd1, newPwd2, msgElement;
+
+    if(currentRole === "admin") {
+      currentPwd = document.getElementById("currentPasswordAdmin").value.trim();
+      newPwd1 = document.getElementById("newPassword1Admin").value.trim();
+      newPwd2 = document.getElementById("newPassword2Admin").value.trim();
+      msgElement = document.getElementById("changePasswordMsg");
+    } else {
+      currentPwd = document.getElementById("currentPasswordTech").value.trim();
+      newPwd1 = document.getElementById("newPassword1Tech").value.trim();
+      newPwd2 = document.getElementById("newPassword2Tech").value.trim();
+      msgElement = document.getElementById("changePasswordMsgTech");
     }
 
-    function startTask(tache) {
-      // Trouver la tâche et mettre à jour le statut
-      const task = allTasks.find(t => t.tache === tache);
-      if (task) {
-        task.statut = "En cours";
-        renderTasks(allTasks);
-        updateTaskStats();
-        showNotification("Tâche démarrée", "info");
-      }
+    msgElement.textContent = "";
+
+    if(!currentPwd || !newPwd1 || !newPwd2) {
+      msgElement.textContent = "يرجى ملء جميع الحقول.";
+      return;
+    }
+    if(newPwd1 !== newPwd2) {
+      msgElement.textContent = "كلمتا المرور الجديدتان غير متطابقتين.";
+      return;
     }
 
-    function markDone(tache) {
-      // Trouver la tâche et mettre à jour le statut
-      const task = allTasks.find(t => t.tache === tache);
-      if (task) {
-        task.statut = "Terminée";
-        renderTasks(allTasks);
-        updateTaskStats();
-        showNotification("Tâche marquée comme terminée", "success");
-      }
-      
-      // Dans un scénario réel, vous utiliseriez:
-      /*
-      fetch(scriptURL, {
-        method: "POST",
-        body: new URLSearchParams({ action: "updateStatus", tache })
+    fetch(scriptURL, {
+      method: "POST",
+      body: new URLSearchParams({
+        action: "changePassword",
+        username,
+        currentPassword: currentPwd,
+        newPassword: newPwd1
       })
-      .then(() => loadTasks());
-      */
-    }
+    })
+    .then(res => res.json())
+    .then(data => {
+      if(data.success) {
+        msgElement.textContent = "تم تغيير كلمة المرور بنجاح.";
+        // مسح الحقول
+        if(currentRole === "admin") {
+          document.getElementById("currentPasswordAdmin").value = "";
+          document.getElementById("newPassword1Admin").value = "";
+          document.getElementById("newPassword2Admin").value = "";
+        } else {
+          document.getElementById("currentPasswordTech").value = "";
+          document.getElementById("newPassword1Tech").value = "";
+          document.getElementById("newPassword2Tech").value = "";
+        }
+      } else {
+        msgElement.textContent = data.message || "خطأ في تغيير كلمة المرور.";
+      }
+    });
+  }
+</script>
 
-    function showNotification(message, type) {
-      // Créer l'élément de notification
-      const notification = document.createElement("div");
-      notification.className = `fixed top-4 right-4 px-4 py-3 rounded-lg shadow-lg text-white font-medium z-50 transition transform duration-300 ${
-        type === "success" ? "bg-green-500" : 
-        type === "error" ? "bg-red-500" : "bg-blue-500"
-      }`;
-      notification.innerHTML = `
-        <div class="flex items-center">
-          <i class="fas ${
-            type === "success" ? "fa-check-circle" : 
-            type === "error" ? "fa-exclamation-circle" : "fa-info-circle"
-          } mr-2"></i>
-          ${message}
-        </div>
-      `;
-      
-      // Ajouter à la page
-      document.body.appendChild(notification);
-      
-      // Supprimer après 3 secondes
-      setTimeout(() => {
-        notification.style.transform = "translateX(100%)";
-        setTimeout(() => {
-          document.body.removeChild(notification);
-        }, 300);
-      }, 3000);
-    }
-  </script>
 </body>
 </html>
