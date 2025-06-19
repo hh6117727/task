@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestion des Tâches</title>
+    <title>Gestion des Tâches Avancée</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Custom font for a modern look */
@@ -18,7 +18,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
+            background-color: rgba(0, 0, 0, 0.6); /* Darker overlay */
             display: flex;
             justify-content: center;
             align-items: center;
@@ -29,24 +29,25 @@
             background-color: white;
             padding: 2rem;
             border-radius: 0.75rem; /* rounded-xl */
-            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1); /* shadow-xl */
-            max-width: 400px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); /* Stronger shadow */
+            max-width: 450px; /* Slightly wider */
             width: 90%;
             text-align: center;
             animation: fadeIn 0.3s ease-out;
+            transform: scale(0.95); /* Subtle scale effect */
         }
 
         .message-box.success {
-            border-top: 4px solid #10B981; /* green-500 */
+            border-top: 5px solid #10B981; /* green-500, thicker border */
         }
 
         .message-box.error {
-            border-top: 4px solid #EF4444; /* red-500 */
+            border-top: 5px solid #EF4444; /* red-500, thicker border */
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from { opacity: 0; transform: translateY(-30px) scale(0.9); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
         /* Styling for the loading spinner */
@@ -56,7 +57,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(255, 255, 255, 0.8);
+            background-color: rgba(255, 255, 255, 0.9); /* Lighter overlay */
             display: flex;
             justify-content: center;
             align-items: center;
@@ -64,11 +65,11 @@
         }
 
         .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3B82F6; /* blue-500 */
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3B82F6; /* blue-500, thicker border */
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            width: 50px; /* Larger spinner */
+            height: 50px;
             animation: spin 1s linear infinite;
         }
 
@@ -76,77 +77,141 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        /* Active tab styling */
+        .tab-button.active {
+            @apply bg-blue-600 text-white shadow-lg;
+        }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-4">
+<body class="bg-gradient-to-br from-blue-100 to-purple-100 min-h-screen flex flex-col items-center justify-start p-4">
 
     <!-- Loading Overlay -->
     <div id="loadingOverlay" class="loading-overlay hidden">
         <div class="spinner"></div>
-        <p class="ml-4 text-gray-700 text-lg">Chargement...</p>
+        <p class="ml-4 text-gray-700 text-xl font-medium">Chargement...</p>
     </div>
 
     <!-- Custom Message Box -->
     <div id="messageBoxOverlay" class="message-box-overlay hidden">
         <div id="messageBox" class="message-box">
-            <p id="messageBoxContent" class="text-lg font-semibold mb-4"></p>
-            <button onclick="hideMessageBox()" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out">
+            <p id="messageBoxContent" class="text-xl font-bold mb-5 text-gray-800"></p>
+            <button onclick="hideMessageBox()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-lg transition duration-300 ease-in-out shadow-md hover:shadow-lg">
                 OK
             </button>
         </div>
     </div>
 
-    <!-- Connexion Form -->
-    <div id="loginForm" class="bg-white p-6 rounded-xl shadow-xl w-full max-w-md">
-        <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">🔐 Connexion</h2>
-        <input type="text" id="username" placeholder="Nom d'utilisateur" class="border border-gray-300 p-3 rounded-lg w-full mb-3 focus:ring-blue-500 focus:border-blue-500 outline-none" />
-        <input type="password" id="password" placeholder="Mot de passe" class="border border-gray-300 p-3 rounded-lg w-full mb-6 focus:ring-blue-500 focus:border-blue-500 outline-none" />
-        <button onclick="login()" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg w-full transition duration-300 ease-in-out shadow-md">Se connecter</button>
-        <p id="loginError" class="text-red-500 text-center mt-4 hidden">Identifiants invalides. Veuillez réessayer.</p>
+    <!-- Main Navigation Bar (Hidden by default, visible after login) -->
+    <nav id="mainNav" class="w-full max-w-4xl bg-white p-4 rounded-xl shadow-lg mb-8 hidden flex justify-between items-center">
+        <div class="flex items-center space-x-4">
+            <span id="loggedInUser" class="text-lg font-semibold text-gray-800"></span>
+        </div>
+        <div class="flex space-x-4">
+            <button onclick="showHomePage()" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out">
+                Accueil
+            </button>
+            <button onclick="logout()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out">
+                Déconnexion
+            </button>
+        </div>
+    </nav>
+
+    <!-- Page Containers -->
+
+    <!-- Connexion Page -->
+    <div id="loginPage" class="page-container bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md transform transition-all duration-300 ease-in-out hover:scale-105">
+        <h2 class="text-3xl font-extrabold mb-8 text-center text-gray-900">🔐 Connexion</h2>
+        <input type="text" id="username" placeholder="Nom d'utilisateur" class="border border-gray-300 p-4 rounded-xl w-full mb-4 focus:ring-blue-500 focus:border-blue-500 outline-none text-lg" />
+        <input type="password" id="password" placeholder="Mot de passe" class="border border-gray-300 p-4 rounded-xl w-full mb-8 focus:ring-blue-500 focus:border-blue-500 outline-none text-lg" />
+        <button onclick="login()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-6 rounded-xl w-full transition duration-300 ease-in-out shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">Se connecter</button>
+        <p id="loginError" class="text-red-600 text-center mt-5 font-semibold hidden">Identifiants invalides. Veuillez réessayer.</p>
     </div>
 
-    <!-- Admin Panel -->
-    <div id="adminPanel" class="hidden bg-white p-6 rounded-xl shadow-xl w-full max-w-2xl mt-8">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold text-gray-800">👤 Panneau Administrateur</h2>
-            <button onclick="logout()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out">Déconnexion</button>
+    <!-- Admin Page -->
+    <div id="adminPage" class="page-container hidden bg-white p-8 rounded-2xl shadow-2xl w-full max-w-4xl mt-8 transform transition-all duration-300 ease-in-out">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b pb-4">
+            <h2 class="text-3xl font-extrabold text-gray-900 mb-4 md:mb-0">👤 Panneau Administrateur</h2>
         </div>
 
-        <h3 class="font-semibold text-lg mb-3 text-gray-700">Ajouter une tâche :</h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-            <input type="date" id="taskDate" class="border border-gray-300 p-3 rounded-lg focus:ring-green-500 focus:border-green-500 outline-none" />
-            <input type="text" id="taskTechnicien" placeholder="Nom du technicien" class="border border-gray-300 p-3 rounded-lg focus:ring-green-500 focus:border-green-500 outline-none" />
-            <input type="text" id="taskDesc" placeholder="Description de tâche" class="border border-gray-300 p-3 rounded-lg focus:ring-green-500 focus:border-green-500 outline-none" />
+        <!-- Admin Tabs Navigation -->
+        <div class="flex flex-wrap mb-6 border-b border-gray-200">
+            <button id="tasksTabBtn" onclick="showAdminSection('tasks')" class="tab-button py-3 px-6 text-lg font-medium text-gray-600 hover:text-blue-700 hover:bg-gray-100 rounded-t-lg transition duration-200 ease-in-out active">
+                📋 Gérer les Tâches
+            </button>
+            <button id="usersTabBtn" onclick="showAdminSection('users')" class="tab-button py-3 px-6 text-lg font-medium text-gray-600 hover:text-blue-700 hover:bg-gray-100 rounded-t-lg transition duration-200 ease-in-out">
+                👥 Gérer les Utilisateurs
+            </button>
         </div>
-        <button onclick="addTask()" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg mb-8 w-full md:w-auto transition duration-300 ease-in-out shadow-md">➕ Ajouter tâche</button>
 
-        <h3 class="font-semibold text-lg mb-3 text-gray-700">Ajouter utilisateur :</h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-            <input type="text" id="newUsername" placeholder="Nom d'utilisateur" class="border border-gray-300 p-3 rounded-lg focus:ring-purple-500 focus:border-purple-500 outline-none" />
-            <input type="password" id="newPassword" placeholder="Mot de passe" class="border border-gray-300 p-3 rounded-lg focus:ring-purple-500 focus:border-purple-500 outline-none" />
-            <select id="newRole" class="border border-gray-300 p-3 rounded-lg bg-white focus:ring-purple-500 focus:border-purple-500 outline-none">
-                <option value="admin">Admin</option>
-                <option value="technicien">Technicien</option>
-            </select>
+        <!-- Admin Tasks Section -->
+        <div id="adminTasksSection" class="admin-section">
+            <!-- Add Task Section -->
+            <section class="mb-10 p-6 bg-blue-50 rounded-xl border border-blue-200">
+                <h3 class="font-bold text-2xl mb-5 text-blue-800">➕ Ajouter une tâche</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <input type="date" id="taskDate" class="border border-blue-300 p-3 rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-700" />
+                    <select id="taskTechnicien" class="border border-blue-300 p-3 rounded-lg bg-white focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-700">
+                        <option value="">Sélectionner un technicien</option>
+                    </select>
+                    <input type="text" id="taskDesc" placeholder="Description de tâche" class="border border-blue-300 p-3 rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-700" />
+                </div>
+                <button onclick="addTask()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl w-full md:w-auto transition duration-300 ease-in-out shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                    Ajouter tâche
+                </button>
+            </section>
+
+            <!-- Manage All Tasks Section -->
+            <section class="mb-10 p-6 bg-green-50 rounded-xl border border-green-200">
+                <h3 class="font-bold text-2xl mb-5 text-green-800">📋 Toutes les tâches</h3>
+                <ul id="adminTaskList" class="space-y-3">
+                    <li class="text-gray-500 text-center py-4">Chargement des tâches...</li>
+                </ul>
+            </section>
         </div>
-        <button onclick="addUser()" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-6 rounded-lg w-full md:w-auto transition duration-300 ease-in-out shadow-md">➕ Ajouter utilisateur</button>
+
+        <!-- Admin Users Section (Hidden by default) -->
+        <div id="adminUsersSection" class="admin-section hidden">
+            <!-- Add User Section -->
+            <section class="mb-10 p-6 bg-purple-50 rounded-xl border border-purple-200">
+                <h3 class="font-bold text-2xl mb-5 text-purple-800">👤 Ajouter un utilisateur</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <input type="text" id="newUsername" placeholder="Nom d'utilisateur" class="border border-purple-300 p-3 rounded-lg focus:ring-purple-500 focus:border-purple-500 outline-none text-gray-700" />
+                    <input type="password" id="newPassword" placeholder="Mot de passe" class="border border-purple-300 p-3 rounded-lg focus:ring-purple-500 focus:border-purple-500 outline-none text-gray-700" />
+                    <select id="newRole" class="border border-purple-300 p-3 rounded-lg bg-white focus:ring-purple-500 focus:border-purple-500 outline-none text-gray-700">
+                        <option value="admin">Admin</option>
+                        <option value="technicien">Technicien</option>
+                    </select>
+                </div>
+                <button onclick="addUser()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-xl w-full md:w-auto transition duration-300 ease-in-out shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                    Ajouter utilisateur
+                </button>
+            </section>
+
+            <!-- Manage Users Section -->
+            <section class="p-6 bg-red-50 rounded-xl border border-red-200">
+                <h3 class="font-bold text-2xl mb-5 text-red-800">🗑️ Gérer les utilisateurs</h3>
+                <ul id="userList" class="space-y-3">
+                    <li class="text-gray-500 text-center py-4">Chargement des utilisateurs...</li>
+                </ul>
+            </section>
+        </div>
     </div>
 
-    <!-- Technician Panel -->
-    <div id="techPanel" class="hidden bg-white p-6 rounded-xl shadow-xl w-full max-w-2xl mt-8">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold text-gray-800">📋 Mes Tâches</h2>
-            <button onclick="logout()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out">Déconnexion</button>
+    <!-- Technician Page -->
+    <div id="techPage" class="page-container hidden bg-white p-8 rounded-2xl shadow-2xl w-full max-w-2xl mt-8 transform transition-all duration-300 ease-in-out">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b pb-4">
+            <h2 class="text-3xl font-extrabold text-gray-900 mb-4 md:mb-0">📋 Mes Tâches</h2>
         </div>
         <ul id="taskList" class="space-y-3">
-            <!-- Tasks will be loaded here -->
+            <li class="text-gray-500 text-center py-4">Chargement des tâches...</li>
         </ul>
     </div>
 
     <script>
         // Google Apps Script API URL
         const API_URL = "https://script.google.com/macros/s/AKfycbz0QW_iHnN-szxYWWtq19uPL3TnpjjXbp6kma5bdLrVyZIeuQ8mZK1_iwISOgYd959A/exec";
-        let currentUser = ""; // Stores the currently logged-in username
+        let currentUser = { username: "", role: "" }; // Stores the currently logged-in username and role
 
         // --- Utility Functions ---
 
@@ -201,6 +266,63 @@
             });
         }
 
+        /**
+         * Shows a specific page and hides all others.
+         * @param {string} pageId - The ID of the page to show (e.g., 'loginPage', 'adminPage', 'techPage').
+         */
+        function showPage(pageId) {
+            document.querySelectorAll('.page-container').forEach(page => {
+                page.classList.add('hidden');
+            });
+            document.getElementById(pageId).classList.remove('hidden');
+
+            // Show or hide main navigation based on the page being displayed
+            if (pageId === 'loginPage') {
+                document.getElementById('mainNav').classList.add('hidden');
+            } else {
+                document.getElementById('mainNav').classList.remove('hidden');
+            }
+        }
+
+        /**
+         * Shows a specific section within the admin panel (tasks or users).
+         * @param {string} sectionName - 'tasks' or 'users'.
+         */
+        function showAdminSection(sectionName) {
+            document.querySelectorAll('.admin-section').forEach(section => {
+                section.classList.add('hidden');
+            });
+            document.getElementById(`admin${sectionName.charAt(0).toUpperCase() + sectionName.slice(1)}Section`).classList.remove('hidden');
+
+            // Update active tab styling
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            document.getElementById(`${sectionName}TabBtn`).classList.add('active');
+
+            // Refresh data when switching tabs if needed
+            if (sectionName === 'tasks') {
+                getAllTasks();
+            } else if (sectionName === 'users') {
+                getUsers();
+            }
+        }
+
+        /**
+         * Directs to the home page based on the current user's role.
+         */
+        function showHomePage() {
+            if (currentUser.role === 'admin') {
+                showPage('adminPage');
+                showAdminSection('tasks'); // Default to tasks section for admin
+            } else if (currentUser.role === 'technicien') {
+                showPage('techPage');
+                getTasks(currentUser.username);
+            } else {
+                showPage('loginPage'); // Fallback if no role is set
+            }
+        }
+
         // --- Core Application Functions ---
 
         /**
@@ -216,7 +338,7 @@
             const password = passwordInput.value.trim();
 
             if (!username || !password) {
-                loginError.textContent = "Veuillez entrer un nom d'utilisateur et un mot de passe.";
+                loginError.textContent = "⚠️ Veuillez entrer un nom d'utilisateur et un mot de passe.";
                 loginError.classList.remove("hidden");
                 return;
             }
@@ -231,23 +353,18 @@
                 const data = await res.json();
 
                 if (data.success) {
-                    currentUser = username;
-                    document.getElementById("loginForm").classList.add("hidden");
+                    currentUser.username = username;
+                    currentUser.role = data.role;
+                    document.getElementById('loggedInUser').textContent = `Bienvenue, ${currentUser.username} (${currentUser.role})`;
+                    showHomePage(); // Show the appropriate home page
                     loginError.classList.add("hidden"); // Hide error message
-
-                    if (data.role === "admin") {
-                        document.getElementById("adminPanel").classList.remove("hidden");
-                    } else {
-                        document.getElementById("techPanel").classList.remove("hidden");
-                        getTasks(); // Load tasks for technician
-                    }
                 } else {
-                    loginError.textContent = "Identifiants invalides. Veuillez réessayer.";
+                    loginError.textContent = "❌ Identifiants invalides. Veuillez réessayer.";
                     loginError.classList.remove("hidden");
                 }
             } catch (error) {
                 console.error("Login error:", error);
-                loginError.textContent = "Erreur de connexion. Veuillez vérifier votre connexion internet.";
+                loginError.textContent = "⚠️ Erreur de connexion. Veuillez vérifier votre connexion internet.";
                 loginError.classList.remove("hidden");
             } finally {
                 hideLoading(); // Hide loading indicator
@@ -258,10 +375,8 @@
          * Logs out the current user, hiding panels and showing the login form.
          */
         function logout() {
-            currentUser = "";
-            document.getElementById("adminPanel").classList.add("hidden");
-            document.getElementById("techPanel").classList.add("hidden");
-            document.getElementById("loginForm").classList.remove("hidden");
+            currentUser = { username: "", role: "" };
+            showPage('loginPage');
             document.getElementById("username").value = ""; // Clear username field on logout
             document.getElementById("password").value = ""; // Clear password field on logout
             document.getElementById("loginError").classList.add("hidden"); // Hide any previous login errors
@@ -272,22 +387,22 @@
          */
         async function addTask() {
             const dateInput = document.getElementById("taskDate");
-            const technicienInput = document.getElementById("taskTechnicien");
+            const technicienSelect = document.getElementById("taskTechnicien");
             const taskDescInput = document.getElementById("taskDesc");
 
             const date = dateInput.value;
-            const technicien = technicienInput.value.trim();
+            const technicien = technicienSelect.value;
             const task = taskDescInput.value.trim();
 
             if (!date || !technicien || !task) {
-                showMessageBox("Veuillez remplir tous les champs de la tâche.", "error");
+                showMessageBox("⚠️ Veuillez remplir tous les champs de la tâche.", "error");
                 return;
             }
 
             showLoading();
 
             try {
-                await fetch(API_URL, {
+                const res = await fetch(API_URL, {
                     method: "POST",
                     body: new URLSearchParams({
                         action: "addTask",
@@ -296,11 +411,18 @@
                         task
                     }),
                 });
-                showMessageBox("✅ Tâche ajoutée avec succès !", "success");
-                clearInputs(["taskDate", "taskTechnicien", "taskDesc"]); // Clear inputs
+                const data = await res.json();
+                if (data.success) {
+                    showMessageBox("✅ Tâche ajoutée avec succès !", "success");
+                    clearInputs(["taskDate", "taskDesc"]);
+                    technicienSelect.value = "";
+                    getAllTasks(); // Refresh the admin's all tasks list
+                } else {
+                    showMessageBox(`❌ Erreur lors de l'ajout de la tâche : ${data.message || 'Inconnu'}`, "error");
+                }
             } catch (error) {
                 console.error("Error adding task:", error);
-                showMessageBox("❌ Erreur lors de l'ajout de la tâche.", "error");
+                showMessageBox("❌ Erreur lors de l'ajout de la tâche. Vérifiez la console.", "error");
             } finally {
                 hideLoading();
             }
@@ -319,14 +441,14 @@
             const role = roleSelect.value;
 
             if (!username || !password || !role) {
-                showMessageBox("Veuillez remplir tous les champs de l'utilisateur.", "error");
+                showMessageBox("⚠️ Veuillez remplir tous les champs de l'utilisateur.", "error");
                 return;
             }
 
             showLoading();
 
             try {
-                await fetch(API_URL, {
+                const res = await fetch(API_URL, {
                     method: "POST",
                     body: new URLSearchParams({
                         action: "addUser",
@@ -335,51 +457,76 @@
                         role
                     }),
                 });
-                showMessageBox("👤 Utilisateur ajouté avec succès !", "success");
-                clearInputs(["newUsername", "newPassword"]); // Clear inputs
+                const data = await res.json();
+                if (data.success) {
+                    showMessageBox("👤 Utilisateur ajouté avec succès !", "success");
+                    clearInputs(["newUsername", "newPassword"]);
+                    getUsers(); // Refresh the user list
+                    populateTechniciansSelect(); // Refresh technician dropdown if new technician added
+                } else {
+                    showMessageBox(`❌ Erreur lors de l'ajout de l'utilisateur : ${data.message || 'Inconnu'}`, "error");
+                }
             } catch (error) {
                 console.error("Error adding user:", error);
-                showMessageBox("❌ Erreur lors de l'ajout de l'utilisateur.", "error");
+                showMessageBox("❌ Erreur lors de l'ajout de l'utilisateur. Vérifiez la console.", "error");
             } finally {
                 hideLoading();
             }
         }
 
         /**
-         * Fetches and displays tasks for the current technician.
+         * Fetches and displays tasks. Can filter by technician or get all tasks.
+         * @param {string|null} [filterTechnicien=null] - The technician name to filter by, or null for all tasks.
          */
-        async function getTasks() {
+        async function getTasks(filterTechnicien = null) {
             const taskList = document.getElementById("taskList");
-            taskList.innerHTML = '<li class="text-gray-500 text-center">Chargement des tâches...</li>'; // Loading message for tasks
+            if (taskList) {
+                taskList.innerHTML = '<li class="text-gray-500 text-center py-4">Chargement des tâches...</li>';
+            }
 
             showLoading();
 
             try {
+                const params = new URLSearchParams({ action: "getTasks" });
+                if (filterTechnicien) {
+                    params.append("technicien", filterTechnicien);
+                }
+
                 const res = await fetch(API_URL, {
                     method: "POST",
-                    body: new URLSearchParams({ action: "getTasks", technicien: currentUser }),
+                    body: params,
                 });
                 const data = await res.json();
 
-                taskList.innerHTML = ""; // Clear existing tasks
+                if (taskList) {
+                    taskList.innerHTML = ""; // Clear existing tasks
+                }
 
                 if (data.tasks && data.tasks.length > 0) {
                     data.tasks.forEach((task, index) => {
                         const li = document.createElement("li");
-                        li.className = `border border-gray-200 p-4 rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center bg-gray-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`;
+                        li.className = `border border-gray-200 p-4 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center bg-white shadow-sm hover:shadow-md transition duration-200 ease-in-out ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`;
                         li.innerHTML = `
-                            <div class="mb-2 md:mb-0">
-                                <span class="block text-gray-800 font-medium">${task.date} - ${task.task}</span>
-                                <span class="block text-sm text-gray-600">Statut: ${task.status}</span>
+                            <div class="mb-2 md:mb-0 flex-grow">
+                                <span class="block text-gray-900 font-semibold text-lg">${task.task}</span>
+                                <span class="block text-sm text-gray-600">🗓️ Date: ${task.date}</span>
+                                ${filterTechnicien === null ? `<span class="block text-sm text-gray-600">🛠️ Technicien: ${task.technicien}</span>` : ''}
+                                <span class="block text-sm text-${task.status === "Complétée" ? 'green' : 'orange'}-600">Statut: ${task.status}</span>
                             </div>
                             ${task.status !== "Complétée" ? `
-                                <button onclick="completeTask('${task.date}','${task.task}')"
-                                    class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out shadow-sm w-full md:w-auto">
+                                <button onclick="completeTask('${task.date}', '${task.task}', '${task.technicien}')"
+                                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-5 rounded-lg transition duration-300 ease-in-out shadow-md hover:shadow-lg w-full md:w-auto mt-3 md:mt-0">
                                     ✅ Terminer
                                 </button>
                             ` : `
-                                <span class="bg-green-100 text-green-700 text-sm font-semibold px-3 py-1 rounded-full">Complétée</span>
+                                <span class="bg-green-100 text-green-700 text-sm font-semibold px-4 py-2 rounded-full">✓ Complétée</span>
                             `}
+                            ${filterTechnicien === null ? `
+                                <button onclick="deleteTask('${task.date}', '${task.task}', '${task.technicien}')"
+                                    class="ml-0 md:ml-3 bg-red-500 hover:bg-red-600 text-white font-bold py-2.5 px-5 rounded-lg transition duration-300 ease-in-out shadow-md hover:shadow-lg w-full md:w-auto mt-3 md:mt-0">
+                                    🗑️ Supprimer
+                                </button>
+                            ` : ''}
                         `;
                         taskList.appendChild(li);
                     });
@@ -388,7 +535,72 @@
                 }
             } catch (error) {
                 console.error("Error fetching tasks:", error);
-                taskList.innerHTML = '<li class="text-red-500 text-center py-4">Erreur lors du chargement des tâches.</li>';
+                if (taskList) {
+                    taskList.innerHTML = '<li class="text-red-500 text-center py-4">❌ Erreur lors du chargement des tâches.</li>';
+                }
+            } finally {
+                hideLoading();
+            }
+        }
+
+        /**
+         * Fetches and displays ALL tasks for the admin panel.
+         */
+        async function getAllTasks() {
+            const adminTaskList = document.getElementById("adminTaskList");
+            if (adminTaskList) {
+                adminTaskList.innerHTML = '<li class="text-gray-500 text-center py-4">Chargement de toutes les tâches...</li>';
+            }
+
+            showLoading();
+
+            try {
+                const res = await fetch(API_URL, {
+                    method: "POST",
+                    body: new URLSearchParams({ action: "getAllTasks" }),
+                });
+                const data = await res.json();
+
+                if (adminTaskList) {
+                    adminTaskList.innerHTML = "";
+                }
+
+                if (data.tasks && data.tasks.length > 0) {
+                    data.tasks.forEach((task, index) => {
+                        const li = document.createElement("li");
+                        li.className = `border border-gray-200 p-4 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center bg-white shadow-sm hover:shadow-md transition duration-200 ease-in-out ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`;
+                        li.innerHTML = `
+                            <div class="mb-2 md:mb-0 flex-grow">
+                                <span class="block text-gray-900 font-semibold text-lg">${task.task}</span>
+                                <span class="block text-sm text-gray-600">🗓️ Date: ${task.date}</span>
+                                <span class="block text-sm text-gray-600">🛠️ Technicien: ${task.technicien}</span>
+                                <span class="block text-sm text-${task.status === "Complétée" ? 'green' : 'orange'}-600">Statut: ${task.status}</span>
+                            </div>
+                            <div class="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-3 w-full md:w-auto">
+                                ${task.status !== "Complétée" ? `
+                                    <button onclick="completeTask('${task.date}', '${task.task}', '${task.technicien}')"
+                                        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-5 rounded-lg transition duration-300 ease-in-out shadow-md hover:shadow-lg w-full md:w-auto">
+                                        ✅ Terminer
+                                    </button>
+                                ` : `
+                                    <span class="bg-green-100 text-green-700 text-sm font-semibold px-4 py-2 rounded-full w-full text-center">✓ Complétée</span>
+                                `}
+                                <button onclick="deleteTask('${task.date}', '${task.task}', '${task.technicien}')"
+                                    class="bg-red-500 hover:bg-red-600 text-white font-bold py-2.5 px-5 rounded-lg transition duration-300 ease-in-out shadow-md hover:shadow-lg w-full md:w-auto">
+                                    🗑️ Supprimer
+                                </button>
+                            </div>
+                        `;
+                        adminTaskList.appendChild(li);
+                    });
+                } else {
+                    adminTaskList.innerHTML = '<li class="text-gray-500 text-center py-4">Aucune tâche enregistrée pour le moment.</li>';
+                }
+            } catch (error) {
+                console.error("Error fetching all tasks:", error);
+                if (adminTaskList) {
+                    adminTaskList.innerHTML = '<li class="text-red-500 text-center py-4">❌ Erreur lors du chargement de toutes les tâches.</li>';
+                }
             } finally {
                 hideLoading();
             }
@@ -398,29 +610,217 @@
          * Marks a task as completed via the API.
          * @param {string} date - The date of the task.
          * @param {string} task - The description of the task.
+         * @param {string} technicien - The technician assigned to the task.
          */
-        async function completeTask(date, task) {
+        async function completeTask(date, task, technicien) {
             showLoading();
 
             try {
-                await fetch(API_URL, {
+                const res = await fetch(API_URL, {
                     method: "POST",
                     body: new URLSearchParams({
                         action: "completeTask",
                         date,
-                        technicien: currentUser,
+                        technicien,
                         task
                     }),
                 });
-                showMessageBox("🎉 Tâche complétée avec succès !", "success");
-                getTasks(); // Refresh tasks after completion
+                const data = await res.json();
+                if (data.success) {
+                    showMessageBox("🎉 Tâche complétée avec succès !", "success");
+                    // Refresh relevant task lists based on current panel
+                    if (currentUser.role === 'admin') {
+                        getAllTasks(); // Admin panel
+                    } else if (currentUser.role === 'technicien') {
+                        getTasks(currentUser.username); // Technician panel
+                    }
+                } else {
+                    showMessageBox(`❌ Erreur lors de la complétion de la tâche : ${data.message || 'Inconnu'}`, "error");
+                }
             } catch (error) {
                 console.error("Error completing task:", error);
-                showMessageBox("❌ Erreur lors de la complétion de la tâche.", "error");
+                showMessageBox("❌ Erreur lors de la complétion de la tâche. Vérifiez la console.", "error");
             } finally {
                 hideLoading();
             }
         }
+
+        /**
+         * Deletes a task via the API (Admin only).
+         * @param {string} date - The date of the task.
+         * @param {string} task - The description of the task.
+         * @param {string} technicien - The technician assigned to the task.
+         */
+        async function deleteTask(date, task, technicien) {
+            showLoading();
+
+            try {
+                const res = await fetch(API_URL, {
+                    method: "POST",
+                    body: new URLSearchParams({
+                        action: "deleteTask",
+                        date,
+                        technicien,
+                        task
+                    }),
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showMessageBox("🗑️ Tâche supprimée avec succès !", "success");
+                    getAllTasks(); // Refresh the admin's all tasks list
+                } else {
+                    showMessageBox(`❌ Erreur lors de la suppression de la tâche : ${data.message || 'Inconnu'}`, "error");
+                }
+            } catch (error) {
+                console.error("Error deleting task:", error);
+                showMessageBox("❌ Erreur lors de la suppression de la tâche. Vérifiez la console.", "error");
+            } finally {
+                hideLoading();
+            }
+        }
+
+        /**
+         * Fetches and displays all users for the admin panel.
+         */
+        async function getUsers() {
+            const userList = document.getElementById("userList");
+            if (userList) {
+                 userList.innerHTML = '<li class="text-gray-500 text-center py-4">Chargement des utilisateurs...</li>';
+            }
+
+            showLoading();
+
+            try {
+                const res = await fetch(API_URL, {
+                    method: "POST",
+                    body: new URLSearchParams({ action: "getUsers" }),
+                });
+                const data = await res.json();
+
+                if (userList) {
+                    userList.innerHTML = "";
+                }
+
+                if (data.users && data.users.length > 0) {
+                    data.users.forEach((user, index) => {
+                        const li = document.createElement("li");
+                        li.className = `border border-gray-200 p-4 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center bg-white shadow-sm hover:shadow-md transition duration-200 ease-in-out ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`;
+                        li.innerHTML = `
+                            <div class="mb-2 md:mb-0 flex-grow">
+                                <span class="block text-gray-900 font-semibold text-lg">${user.username}</span>
+                                <span class="block text-sm text-gray-600">Rôle: ${user.role}</span>
+                            </div>
+                            <button onclick="deleteUser('${user.username}')"
+                                class="bg-red-500 hover:bg-red-600 text-white font-bold py-2.5 px-5 rounded-lg transition duration-300 ease-in-out shadow-md hover:shadow-lg w-full md:w-auto mt-3 md:mt-0">
+                                🗑️ Supprimer
+                            </button>
+                        `;
+                        userList.appendChild(li);
+                    });
+                } else {
+                    userList.innerHTML = '<li class="text-gray-500 text-center py-4">Aucun utilisateur enregistré pour le moment.</li>';
+                }
+            } catch (error) {
+                console.error("Error fetching users:", error);
+                if (userList) {
+                    userList.innerHTML = '<li class="text-red-500 text-center py-4">❌ Erreur lors du chargement des utilisateurs.</li>';
+                }
+            } finally {
+                hideLoading();
+            }
+        }
+
+        /**
+         * Populates the 'Sélectionner un technicien' dropdown with users having the 'technicien' role.
+         */
+        async function populateTechniciansSelect() {
+            const technicienSelect = document.getElementById("taskTechnicien");
+            technicienSelect.innerHTML = '<option value="">Chargement des techniciens...</option>';
+
+            try {
+                const res = await fetch(API_URL, {
+                    method: "POST",
+                    body: new URLSearchParams({ action: "getUsers" }),
+                });
+                const data = await res.json();
+
+                technicienSelect.innerHTML = '<option value="">Sélectionner un technicien</option>';
+
+                if (data.users && data.users.length > 0) {
+                    const technicians = data.users.filter(user => user.role === "technicien");
+                    if (technicians.length > 0) {
+                        technicians.forEach(technician => {
+                            const option = document.createElement("option");
+                            option.value = technician.username;
+                            option.textContent = technician.username;
+                            technicienSelect.appendChild(option);
+                        });
+                    } else {
+                        technicienSelect.innerHTML = '<option value="">Aucun technicien trouvé</option>';
+                    }
+                } else {
+                    technicienSelect.innerHTML = '<option value="">Aucun utilisateur trouvé</option>';
+                }
+            } catch (error) {
+                console.error("Error populating technicians select:", error);
+                technicienSelect.innerHTML = '<option value="">Erreur de chargement</option>';
+            }
+        }
+
+        /**
+         * Deletes a user via the API (Admin only).
+         * @param {string} username - The username of the user to delete.
+         */
+        async function deleteUser(username) {
+            showLoading();
+
+            try {
+                const res = await fetch(API_URL, {
+                    method: "POST",
+                    body: new URLSearchParams({
+                        action: "deleteUser",
+                        username
+                    }),
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showMessageBox("🗑️ Utilisateur supprimé avec succès !", "success");
+                    getUsers(); // Refresh the user list
+                    populateTechniciansSelect(); // Refresh technician dropdown after deletion
+                } else {
+                    showMessageBox(`❌ Erreur lors de la suppression de l'utilisateur : ${data.message || 'Inconnu'}`, "error");
+                }
+            } catch (error) {
+                console.error("Error deleting user:", error);
+                showMessageBox("❌ Erreur lors de la suppression de l'utilisateur. Vérifiez la console.", "error");
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Add event listener for Enter key on login form
+        document.addEventListener('DOMContentLoaded', () => {
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+
+            if (usernameInput) {
+                usernameInput.addEventListener('keypress', function(event) {
+                    if (event.key === 'Enter') {
+                        login();
+                    }
+                });
+            }
+            if (passwordInput) {
+                passwordInput.addEventListener('keypress', function(event) {
+                    if (event.key === 'Enter') {
+                        login();
+                    }
+                });
+            }
+
+            // Initial page load: show login page
+            showPage('loginPage');
+        });
     </script>
 </body>
 </html>
